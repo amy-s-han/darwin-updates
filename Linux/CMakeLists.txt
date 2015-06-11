@@ -2,3 +2,4 @@
 
 add_subdirectory(build)
 add_subdirectory(project)
+add_subdirectory(playback)
