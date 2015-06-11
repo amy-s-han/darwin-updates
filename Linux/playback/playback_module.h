@@ -14,23 +14,35 @@
 //????????????????????????
 namespace Robot {
 
+	// where to put this class? can define in playback_module
+	class SimpleTrajectory {
+		public:
+
+		double dt;
+		size_t njoints;
+		size_t nticks;
+
+		std::vector<double> angles_rad;
+
+		SimpleTrajectory();
+
+	};
+
 	class Playback : public MotionModule {
-	private:
-		static Playback * m_UniqueInstance;
-		bool parse_file(const char* filename, SimpleTrajectory& traj);
 
 	public: 
-		static Playback* GetInstance(){ return m_UniqueInstance; }
-
-		// constructor ??? 
-		Playback(std::string &filname);
-
+		bool isDone;
+		SimpleTrajectory traj;
+		const char* file; // check on pointer to string
 		int offset_counter; //keeps track of index within playback file
 
+		Playback(const char* filename);
 		~Playback();
 
 		void Initialize();
 		void Process();
+		bool parse_file();
+		// probably don't need filename if filename is now a public var
 
 
 
@@ -42,6 +54,7 @@ namespace Robot {
 
 
 	};
+
 }
 
 #endif /*_PLAYBACK_MODULE_H*/

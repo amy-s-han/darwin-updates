@@ -22,13 +22,20 @@
 //???????????????????????? use robot namespace or std namespace?
 using namespace Robot; 
 
-Playback* Playback::m_UniqueInstance = new Playback(std::string &filename);
+enum { NUM_JOINTS = 20 } ;
 
-Playback::Playback(std::string &filename){
+SimpleTrajectory::SimpleTrajectory(){
+	//constructor for simpletrajectory
+}
+
+Playback::Playback(const char* filename){
 	//constructor stuff
+	file = filename; //????????????
+	traj = SimpleTrajectory();
+	isDone = false;
 }
 		
-~Playback(){
+Playback::~Playback(){
 	//destructor
 }
 
@@ -39,8 +46,8 @@ void Playback::Initialize(){
 
 	MotionManager::GetInstance()->SetEnable(true);
   	for (int i=1; i<=20; i++){
-    	Playback::GetInstance()->m_Joint.SetEnable(i,true,true);
-    	Playback::GetInstance()->m_Joint.SetAngle(i,0);
+    	m_Joint.SetEnable(i,true,true);
+    	m_Joint.SetAngle(i,0);
   	}
 
 }
@@ -56,13 +63,30 @@ void Playback::Process(){
 	// if(m_Joint.GetEnable(JointData::ID_HEAD_TILT) == true)
 	// 	m_Joint.SetAngle(JointData::ID_HEAD_TILT, m_TiltAngle);
 
+
+	// here is the update stuff from the old playback.cpp:
+
+
+	// put trajectory data into motors
+	for (int i=0; i<NUM_JOINTS; ++i) {
+	  //TODO: sanity check
+	  if(i>traj.angles_rad.size()){
+	  	isDone = true;
+	  	return;
+	  }
+
+	  // note motor indices start at 1, so need to add i+1 for motor_number
+	  m_Joint.SetRadian(i+1, traj.angles_rad[offset_counter]);
+	  ++offset_counter;
+	}
+
 }
 
-bool parse_file(const char* filename, SimpleTrajectory& traj) {
+bool Playback::parse_file() {
 
-  std::ifstream istr(filename);
+  std::ifstream istr(file);
   if (!istr.is_open()) {
-    std::cerr << "error opening file " << filename << "!\n";
+    std::cerr << "error opening file " << file << "!\n";
     return false;
   }
 

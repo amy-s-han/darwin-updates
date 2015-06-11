@@ -6,5 +6,5 @@ set(sources
 
 add_executable(playback ${sources})
 
-target_link_libraries(playback control_robot ${DARWIN_LIBS} ${SDL_LIBRARIES})
+target_link_libraries(playback darwin pthread rt)
 
