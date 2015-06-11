@@ -19,19 +19,12 @@
 #include "LinuxDARwIn.h"
 #include "playback_module.h"
 
-//???????????????????????? use robot namespace or std namespace?
 using namespace Robot; 
 
 enum { NUM_JOINTS = 20 } ;
 
-SimpleTrajectory::SimpleTrajectory(){
-	//constructor for simpletrajectory
-}
-
 Playback::Playback(const char* filename){
-	//constructor stuff
-	file = filename; //????????????
-	traj = SimpleTrajectory();
+	file = filename; 
 	isDone = false;
 }
 		
@@ -56,27 +49,22 @@ void Playback::Process(){
 	//set the m_Joint to reflect joint angles from the current tick
 	//if current tick is not the last one, increment the current tick
 
-	// here is head.cpp's process():
-	// if(m_Joint.GetEnable(JointData::ID_HEAD_PAN) == true)
-	// 	m_Joint.SetAngle(JointData::ID_HEAD_PAN, m_PanAngle);
-
-	// if(m_Joint.GetEnable(JointData::ID_HEAD_TILT) == true)
-	// 	m_Joint.SetAngle(JointData::ID_HEAD_TILT, m_TiltAngle);
-
-
-	// here is the update stuff from the old playback.cpp:
-
-
 	// put trajectory data into motors
 	for (int i=0; i<NUM_JOINTS; ++i) {
 	  //TODO: sanity check
-	  if(i>traj.angles_rad.size()){
+
+	  if(offset_counter>angles_rad.size()){
 	  	isDone = true;
 	  	return;
 	  }
 
 	  // note motor indices start at 1, so need to add i+1 for motor_number
-	  m_Joint.SetRadian(i+1, traj.angles_rad[offset_counter]);
+	  //m_Joint.SetRadian(i+1, angles_rad[offset_counter]);
+	  double cur_angle = angles_rad[offset_counter];
+	  if (cur_angle < -8 || cur_angle > 8) {
+	  	// error
+	  	printf("ERRORRRRR!");
+	  }
 	  ++offset_counter;
 	}
 
@@ -100,37 +88,35 @@ bool Playback::parse_file() {
     return false;
   }
 
-  if (!(istr >> traj.njoints >> traj.nticks >> traj.dt)) {
+  if (!(istr >> njoints >> nticks >> dt)) {
     std::cerr << "error parsing header!\n";
     return false;
   }
 
-  if (traj.njoints != NUM_JOINTS) {
-    std::cerr << "incorrect # joints: got " << traj.njoints << ", expected " << NUM_JOINTS << "\n";
+  if (njoints != NUM_JOINTS) {
+    std::cerr << "incorrect # joints: got " << njoints << ", expected " << NUM_JOINTS << "\n";
     return false;
   }
 
-  if (traj.dt <= 0) {
+  if (dt <= 0) {
     std::cerr << "expected dt > 0!\n";
     return false;
   }
 
-  if (!traj.nticks) {
+  if (!nticks) {
     std::cerr << "refuse to read empty trajectory!\n";
     return false;
   }
 
-  size_t offset = 0;
+  angles_rad.resize(nticks * njoints);
 
-  traj.angles_rad.resize(traj.nticks * traj.njoints);
-
-  for (size_t t=0; t<traj.nticks; ++t) {
-    for (size_t i=0; i<traj.njoints; ++i) { 
-      if (!(istr >> traj.angles_rad[offset])) {
+  for (size_t t=0; t<nticks; ++t) {
+    for (size_t i=0; i<njoints; ++i) { 
+      if (!(istr >> angles_rad[offset_counter])) {
 	std::cerr << "error parsing angle!\n";
 	return false;
       }
-      ++offset;
+      ++offset_counter;
     }
   }
   
@@ -138,6 +124,9 @@ bool Playback::parse_file() {
 
 }
 
+bool Playback::IsDone(){
+	return isDone;
+}
 
 // Maybe we want these?
 // void LoadINISettings(minIni* ini);

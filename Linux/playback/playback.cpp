@@ -30,7 +30,6 @@ int motion_initialization(MotionModule* playback){
 
   MotionManager::GetInstance()->AddModule((MotionModule*)playback);	
 
-
   LinuxMotionTimer *motion_timer = new LinuxMotionTimer(MotionManager::GetInstance());
   motion_timer->Start();
 
@@ -48,7 +47,6 @@ int motion_initialization(MotionModule* playback){
 }
 
 enum { NUM_JOINTS = 20 } ;
-
 
 int main(int argc, char** argv)
 {
@@ -72,16 +70,13 @@ int main(int argc, char** argv)
   }
 
   // this is frightening but I think it needs to wait for motion initialization to do stuff
-  sleep(1);
+  //sleep(1);
 
-  // convert delta t from trajectory to microseconds
-  size_t dt_usec = size_t(playback->traj.dt * 1e6);
+  assert( playback.angles_rad.size() == playback.nticks * NUM_JOINTS );
 
-  // the offset of the current tick within trajectory data
-  size_t offset = 0;
-
-  assert( playback.traj.angles_rad.size() == playback.traj.nticks * NUM_JOINTS );
-
+  while (!playback->IsDone()) {
+    usleep(1);
+  }
 
   return 0;
 
