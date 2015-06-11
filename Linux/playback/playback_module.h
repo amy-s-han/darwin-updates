@@ -17,14 +17,15 @@ namespace Robot {
 	class Playback : public MotionModule {
 	private:
 		static Playback * m_UniqueInstance;
+		bool parse_file(const char* filename, SimpleTrajectory& traj);
 
 	public: 
 		static Playback* GetInstance(){ return m_UniqueInstance; }
 
 		// constructor ??? 
-		void Playback(std::string &filname);
+		Playback(std::string &filname);
 
-		int offset_counter;
+		int offset_counter; //keeps track of index within playback file
 
 		~Playback();
 
@@ -43,4 +44,4 @@ namespace Robot {
 	};
 }
 
-
+#endif /*_PLAYBACK_MODULE_H*/

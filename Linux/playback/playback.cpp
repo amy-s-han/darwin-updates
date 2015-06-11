@@ -9,10 +9,10 @@
 #include <assert.h>
 #include <sys/stat.h>
 
-#include "Body.h"
 #include "Camera.h"
 #include "mjpg_streamer.h"
 #include "LinuxDARwIn.h"
+#include "playback_module.h"
 
 using namespace std;
 
@@ -27,7 +27,7 @@ int motion_initialization(){
     printf("Fail to initialize Motion Manager!\n");
     return -1;
   }
-  MotionManager::GetInstance()->AddModule((MotionModule*)Body::GetInstance());	
+  MotionManager::GetInstance()->AddModule((MotionModule*)Playback::GetInstance());	
 
 
   LinuxMotionTimer *motion_timer = new LinuxMotionTimer(MotionManager::GetInstance());
@@ -35,22 +35,18 @@ int motion_initialization(){
 
   struct stat sb;
 
+  // not sure where to put this initialization stuff? probably just keep it here
   if (stat("offsets.ini", &sb) == 0 && S_ISREG(sb.st_mode)) {
     minIni* ini = new minIni("offsets.ini");
     MotionManager::GetInstance()->LoadINISettings(ini);
     printf("parsed offsets.ini!\n");
   }
 
-  MotionManager::GetInstance()->SetEnable(true);
-  for (int i=1; i<=20; i++){
-    Body::GetInstance()->m_Joint.SetEnable(i,true,true);
-    Body::GetInstance()->m_Joint.SetAngle(i,0);
-  }
-
   return 0;
 
 }
 
+// where to put this class? can define in playback_module
 class SimpleTrajectory {
 public:
 
@@ -60,66 +56,10 @@ public:
 
   std::vector<double> angles_rad;
 
-
 };
 
 enum { NUM_JOINTS = 20 } ;
 
-bool parse_file(const char* filename, SimpleTrajectory& traj) {
-
-  std::ifstream istr(filename);
-  if (!istr.is_open()) {
-    std::cerr << "error opening file " << filename << "!\n";
-    return false;
-  }
-
-  std::string header_str;
-
-  // parse our header
-  istr >> header_str;
-
-  if (header_str != "TRAJ") {
-    std::cerr << "expected TRAJ header!\n";
-    return false;
-  }
-
-  if (!(istr >> traj.njoints >> traj.nticks >> traj.dt)) {
-    std::cerr << "error parsing header!\n";
-    return false;
-  }
-
-  if (traj.njoints != NUM_JOINTS) {
-    std::cerr << "incorrect # joints: got " << traj.njoints << ", expected " << NUM_JOINTS << "\n";
-    return false;
-  }
-
-  if (traj.dt <= 0) {
-    std::cerr << "expected dt > 0!\n";
-    return false;
-  }
-
-  if (!traj.nticks) {
-    std::cerr << "refuse to read empty trajectory!\n";
-    return false;
-  }
-
-  size_t offset = 0;
-
-  traj.angles_rad.resize(traj.nticks * traj.njoints);
-
-  for (size_t t=0; t<traj.nticks; ++t) {
-    for (size_t i=0; i<traj.njoints; ++i) { 
-      if (!(istr >> traj.angles_rad[offset])) {
-	std::cerr << "error parsing angle!\n";
-	return false;
-      }
-      ++offset;
-    }
-  }
-  
-  return true;
-
-}
 
 int main(int argc, char** argv)
 {
@@ -131,7 +71,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (!parse_file(argv[1], traj)) {
+  if (!Playback::GetInstance()->parse_file(argv[1], traj)) {
     std::cerr << "no trajectory loaded, exiting.\n";
     return 1;
   }
@@ -160,7 +100,7 @@ int main(int argc, char** argv)
     // put trajectory data into motors
     for (int i=0; i<NUM_JOINTS; ++i) {
       // note motor indices start at 1, so need to add i+1 for motor_number
-      Body::GetInstance()->m_Joint.SetRadian(i+1, traj.angles_rad[offset]);
+      //Body::GetInstance()->m_Joint.SetRadian(i+1, traj.angles_rad[offset]);
       ++offset;
     }
 

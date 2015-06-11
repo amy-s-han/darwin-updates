@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <sys/stat.h>
 
-#include "Body.h"
 #include "Camera.h"
 #include "mjpg_streamer.h"
 #include "LinuxDARwIn.h"
@@ -36,6 +35,14 @@ Playback::Playback(std::string &filename){
 void Playback::Initialize(){
 	offset_counter = 0; //reset offset to 0
 	//set all joints to be enabled
+	m_Joint.SetEnableBody(true);
+
+	MotionManager::GetInstance()->SetEnable(true);
+  	for (int i=1; i<=20; i++){
+    	Playback::GetInstance()->m_Joint.SetEnable(i,true,true);
+    	Playback::GetInstance()->m_Joint.SetAngle(i,0);
+  	}
+
 }
 
 void Playback::Process(){
@@ -51,6 +58,61 @@ void Playback::Process(){
 
 }
 
+bool parse_file(const char* filename, SimpleTrajectory& traj) {
+
+  std::ifstream istr(filename);
+  if (!istr.is_open()) {
+    std::cerr << "error opening file " << filename << "!\n";
+    return false;
+  }
+
+  std::string header_str;
+
+  // parse our header
+  istr >> header_str;
+
+  if (header_str != "TRAJ") {
+    std::cerr << "expected TRAJ header!\n";
+    return false;
+  }
+
+  if (!(istr >> traj.njoints >> traj.nticks >> traj.dt)) {
+    std::cerr << "error parsing header!\n";
+    return false;
+  }
+
+  if (traj.njoints != NUM_JOINTS) {
+    std::cerr << "incorrect # joints: got " << traj.njoints << ", expected " << NUM_JOINTS << "\n";
+    return false;
+  }
+
+  if (traj.dt <= 0) {
+    std::cerr << "expected dt > 0!\n";
+    return false;
+  }
+
+  if (!traj.nticks) {
+    std::cerr << "refuse to read empty trajectory!\n";
+    return false;
+  }
+
+  size_t offset = 0;
+
+  traj.angles_rad.resize(traj.nticks * traj.njoints);
+
+  for (size_t t=0; t<traj.nticks; ++t) {
+    for (size_t i=0; i<traj.njoints; ++i) { 
+      if (!(istr >> traj.angles_rad[offset])) {
+	std::cerr << "error parsing angle!\n";
+	return false;
+      }
+      ++offset;
+    }
+  }
+  
+  return true;
+
+}
 
 
 // Maybe we want these?
