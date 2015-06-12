@@ -60,8 +60,8 @@ void Playback::Process(){
 	  }
 
 	  // note motor indices start at 1, so need to add i+1 for motor_number
-	  //m_Joint.SetRadian(i+1, angles_rad[offset_counter]);
 	  double cur_angle = angles_rad[offset_counter];
+	  m_Joint.SetRadian(i+1, cur_angle);
 	  if (cur_angle < -8 || cur_angle > 8) {
 	  	// error
 	  	printf("ERRORRRRR!");

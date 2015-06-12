@@ -55,7 +55,10 @@ int motion_initialization(MotionModule* playback){
     wStartPosition = MotionStatus::m_CurrentJoints.GetValue(id);
 
     // get initial value from motion module
-    wGoalPosition = Walking::GetInstance()->m_Joint.GetValue(id);
+    wGoalPosition = playback->m_Joint.GetValue(id);
+
+    printf("joint %d start is %d, goal is %d\n", id, wStartPosition, wGoalPosition);
+
     // get the absolute value of the distance between start & goal (in ticks)
     if( wStartPosition > wGoalPosition )
       wDistance = wStartPosition - wGoalPosition;
