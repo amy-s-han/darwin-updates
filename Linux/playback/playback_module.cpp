@@ -38,9 +38,11 @@ void Playback::Initialize(){
 	m_Joint.SetEnableBody(true);
 
 	MotionManager::GetInstance()->SetEnable(true);
-  	for (int i=1; i<=20; i++){
+  	for (int i=1; i<=20; i++){ //remember that motor indexing starts at 1
     	m_Joint.SetEnable(i,true,true);
-    	m_Joint.SetAngle(i,0);
+    	
+      //setting motor angles for the first tick
+      m_Joint.SetRadian(i, angles_rad[i-1]); 
   	}
 
 }
@@ -51,9 +53,8 @@ void Playback::Process(){
 
 	// put trajectory data into motors
 	for (int i=0; i<NUM_JOINTS; ++i) {
-	  //TODO: sanity check
 
-	  if(offset_counter>angles_rad.size()){
+	  if(offset_counter>angles_rad.size()){ //check if done
 	  	isDone = true;
 	  	return;
 	  }

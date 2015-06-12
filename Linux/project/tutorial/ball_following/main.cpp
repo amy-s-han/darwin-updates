@@ -66,33 +66,70 @@ int main(void)
     motion_timer->Start();
 	/////////////////////////////////////////////////////////////////////
 
-	int n = 0;
-	int param[JointData::NUMBER_OF_JOINTS * 5];
-	int wGoalPosition, wStartPosition, wDistance;
+	// how to get smooth initialization. 
+    // initialize the CM730, initialize the MotionManager, add the playback object
+    // to the motion manager, and don't start the motion timer until after
+    // this is called
 
-	for(int id=JointData::ID_R_SHOULDER_PITCH; id<JointData::NUMBER_OF_JOINTS; id++)
-	{
-		wStartPosition = MotionStatus::m_CurrentJoints.GetValue(id);
-		wGoalPosition = Walking::GetInstance()->m_Joint.GetValue(id);
-		if( wStartPosition > wGoalPosition )
-			wDistance = wStartPosition - wGoalPosition;
-		else
-			wDistance = wGoalPosition - wStartPosition;
+    // this is an offset into the params below
+    int n = 0;
 
-		wDistance >>= 2;
-		if( wDistance < 8 )
-			wDistance = 8;
+    // this is what gets written to the CM730 eventually, 5 ints per joint
+    int param[JointData::NUMBER_OF_JOINTS * 5];
 
-		param[n++] = id;
-		param[n++] = CM730::GetLowByte(wGoalPosition);
-		param[n++] = CM730::GetHighByte(wGoalPosition);
-		param[n++] = CM730::GetLowByte(wDistance);
-		param[n++] = CM730::GetHighByte(wDistance);
-	}
-	cm730.SyncWrite(MX28::P_GOAL_POSITION_L, 5, JointData::NUMBER_OF_JOINTS - 1, param);	
+    // temporary variables per jointin the Playback object to reflect the 
+    // very first tick of the trajectory so that the JointData is accurately
+    // reflecting goal position
+    int wGoalPosition, wStartPosition, wDistance;
 
-	printf("Press the ENTER key to begin!\n");
-	getchar();
+    // for each joint
+    for(int id=JointData::ID_R_SHOULDER_PITCH; id<JointData::NUMBER_OF_JOINTS; id++)
+    {
+
+        // get current value (rotation encoder ticks)
+        wStartPosition = MotionStatus::m_CurrentJoints.GetValue(id);
+
+        // get initial value from motion module
+        wGoalPosition = Walking::GetInstance()->m_Joint.GetValue(id);
+        
+        // get the absolute value of the distance between start & goal (in ticks)
+        if( wStartPosition > wGoalPosition )
+            wDistance = wStartPosition - wGoalPosition;
+        else
+            wDistance = wGoalPosition - wStartPosition;
+
+        // divide distance by 4 - this is totally dumb because wDistance /= 4 would read so much better
+        wDistance >>= 2;
+
+        // enforce a min distance of 8
+        if( wDistance < 8 )
+            wDistance = 8;
+
+        // first int among params is the joint id
+        param[n++] = id;
+
+        // next two ints among params are the low and high bytes of the goal position
+        param[n++] = CM730::GetLowByte(wGoalPosition);
+        param[n++] = CM730::GetHighByte(wGoalPosition);
+
+        // next two ints among params are the low and high bytes of the distance
+        // which I beleive is not actually used as a distance here, but rather
+        // as a gain or speed control (there is an implicit "per second" going on here
+        // , I have a hunch)
+        param[n++] = CM730::GetLowByte(wDistance);
+        param[n++] = CM730::GetHighByte(wDistance);
+    }
+
+    // communicate directly with the CM730 board to use presumably 
+    // the MX28::P_GOAL_POSITION_L command, 
+    // my guess is that 5 is the # params per packet
+    // my guess is that NUMBER_OF_JOINTS-1 is the # packets
+    // very last thing is ptr to param packet data
+    cm730.SyncWrite(MX28::P_GOAL_POSITION_L, 5, JointData::NUMBER_OF_JOINTS - 1, param);    
+
+    
+    printf("Press the ENTER key to begin!\n");
+    getchar();
 	
     Head::GetInstance()->m_Joint.SetEnableHeadOnly(true, true);
     Walking::GetInstance()->m_Joint.SetEnableBodyWithoutHead(true, true);
