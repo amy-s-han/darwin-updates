@@ -141,7 +141,7 @@ int main(int argc, char** argv)
   // this is frightening but I think it needs to wait for motion initialization to do stuff
   //sleep(1);
 
-  assert( playback.angles_rad.size() == playback.nticks * NUM_JOINTS );
+  assert( playback->angles_rad.size() == playback->nticks * NUM_JOINTS );
 
   while (!playback->IsDone()) {
     usleep(1);
