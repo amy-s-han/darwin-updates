@@ -25,7 +25,7 @@ enum { NUM_JOINTS = 20 } ;
 
 Playback::Playback(const char* filename){
 	file = filename; 
-	isDone = false;
+	isPlaying = false;
 }
 		
 Playback::~Playback(){
@@ -33,7 +33,10 @@ Playback::~Playback(){
 }
 
 void Playback::Initialize(){
+
+        isPlaying = false;
 	offset_counter = 0; //reset offset to 0
+
 	//set all joints to be enabled
 	m_Joint.SetEnableBody(true);
 
@@ -47,7 +50,16 @@ void Playback::Initialize(){
 
 }
 
+void Playback::Start() {
+  if (!angles_rad.empty()) {
+    offset_counter = 0;
+    isPlaying = true;
+  }
+}
+
 void Playback::Process(){
+
+  if (!isPlaying) { return; }
 	//set the m_Joint to reflect joint angles from the current tick
 	//if current tick is not the last one, increment the current tick
 
@@ -55,7 +67,7 @@ void Playback::Process(){
 	for (int i=0; i<NUM_JOINTS; ++i) {
 
 	  if(offset_counter>angles_rad.size()){ //check if done
-	  	isDone = true;
+  	        isPlaying = false;
 	  	return;
 	  }
 
@@ -126,7 +138,7 @@ bool Playback::parse_file() {
 }
 
 bool Playback::IsDone(){
-	return isDone;
+  return !isPlaying && offset_counter >= angles_rad.size();
 }
 
 // Maybe we want these?
@@ -134,6 +146,8 @@ bool Playback::IsDone(){
 // void LoadINISettings(minIni* ini, const std::string &section);
 // void SaveINISettings(minIni* ini);
 // void SaveINISettings(minIni* ini, const std::string &section);
+
+
 
 
 

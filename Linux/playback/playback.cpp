@@ -28,7 +28,13 @@ int motion_initialization(MotionModule* playback){
     return -1;
   }
 
+  MotionManager::GetInstance()->SetEnable(false);
+
   MotionManager::GetInstance()->AddModule((MotionModule*)playback);	
+
+  LinuxMotionTimer *motion_timer = new LinuxMotionTimer(MotionManager::GetInstance());
+  motion_timer->Start();
+
 
   // how to get smooth initialization. 
   // initialize the CM730, initialize the MotionManager, add the playback object
@@ -37,6 +43,7 @@ int motion_initialization(MotionModule* playback){
   // very first tick of the trajectory so that the JointData is accurately
   // reflecting goal position
 
+  
 
   // this is an offset into the params below
   int n = 0;
@@ -98,11 +105,10 @@ int motion_initialization(MotionModule* playback){
   printf("Press the ENTER key to begin!\n");
   getchar();
 
-  // now safe to start the motion timer
+  MotionManager::GetInstance()->SetEnable(true);
 
-  LinuxMotionTimer *motion_timer = new LinuxMotionTimer(MotionManager::GetInstance());
-  motion_timer->Start();
 
+  /*
   struct stat sb;
 
   // not sure where to put this initialization stuff? probably just keep it here
@@ -111,6 +117,7 @@ int motion_initialization(MotionModule* playback){
     MotionManager::GetInstance()->LoadINISettings(ini);
     printf("parsed offsets.ini!\n");
   }
+  */
 
   return 0;
 
@@ -132,6 +139,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  assert( playback->angles_rad.size() == playback->nticks * NUM_JOINTS );
+
   std::cout << "loaded " << argv[1] << "\n";
 
   if (motion_initialization(playback)){
@@ -144,10 +153,11 @@ int main(int argc, char** argv)
   // this is frightening but I think it needs to wait for motion initialization to do stuff
   //sleep(1);
 
-  assert( playback->angles_rad.size() == playback->nticks * NUM_JOINTS );
+
+  playback->Start();
 
   while (!playback->IsDone()) {
-    usleep(1);
+    usleep(100000);
   }
 
   return 0;

@@ -16,7 +16,7 @@ namespace Robot {
 	class Playback : public MotionModule {
 
 	public: 
-		bool isDone;
+		bool isPlaying;
 		const char* file; // check on pointer to string
 		int offset_counter; //keeps track of index within playback file
 		double dt;
@@ -32,6 +32,7 @@ namespace Robot {
 		void Process();
 		bool parse_file();
 		bool IsDone();
+		void Start();
 
 		// Maybe we want these?
 		// void LoadINISettings(minIni* ini);
