@@ -2,6 +2,7 @@
 
 set(sources
 	test.cpp
+	ports.cpp
 	)
 
 add_executable(test ${sources})

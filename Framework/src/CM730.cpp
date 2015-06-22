@@ -465,8 +465,12 @@ int CM730::SyncWrite(int start_addr, int each_length, int number, int *pParam)
     txpacket[INSTRUCTION]       = INST_SYNC_WRITE;
     txpacket[PARAMETER]			= (unsigned char)start_addr;
     txpacket[PARAMETER + 1]		= (unsigned char)(each_length - 1);
+
+    // parameter plus 2 is 7 which is first data slot
     for(n = 0; n < (number * each_length); n++)
         txpacket[PARAMETER + 2 + n]   = (unsigned char)pParam[n];
+
+    // n is num packets * length of packet
     txpacket[LENGTH]            = n + 4;
 
     return TxRxPacket(txpacket, rxpacket, 0);
