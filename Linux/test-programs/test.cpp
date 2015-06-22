@@ -20,6 +20,17 @@ int main(){
         fprintf(stderr, " CM-730 is used by another program or do not have root privileges.\n\n");
         return 0;
     }
+
+    //dxl power on stuff
+    //(WriteByte(CM730::ID_CM, CM730::P_DXL_POWER, 1, 0)
+
+    unsigned char dxltxpacket[] = {0xFF, 0xFF, 0xC8, 0x04, 0x03, 0x18, 0x01, 0};
+    dxltxpacket[7] = CalculateChecksum(dxltxpacket);
+    port->WritePort(dxltxpacket, 8);
+
+    printf("Finshed dxl power up. Press enter\n");
+    getchar();
+
     
     int newcolor = MakeColor(255, 0, 0);
     printf("new color: %d\n", newcolor);
