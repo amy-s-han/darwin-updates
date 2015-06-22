@@ -34,7 +34,7 @@ Playback::~Playback(){
 
 void Playback::Initialize(){
 
-        isPlaying = false;
+  isPlaying = false;
 	offset_counter = 0; //reset offset to 0
 
 	//set all joints to be enabled
@@ -52,7 +52,6 @@ void Playback::Initialize(){
 
 void Playback::Start() {
   if (!angles_rad.empty()) {
-    offset_counter = 0;
     isPlaying = true;
   }
 }
@@ -60,8 +59,6 @@ void Playback::Start() {
 void Playback::Process(){
 
   if (!isPlaying) { return; }
-	//set the m_Joint to reflect joint angles from the current tick
-	//if current tick is not the last one, increment the current tick
 
 	// put trajectory data into motors
 	for (int i=0; i<NUM_JOINTS; ++i) {
@@ -71,6 +68,8 @@ void Playback::Process(){
 	  	return;
 	  }
 
+
+    //set the m_Joint to reflect joint angles from the current tick
 	  // note motor indices start at 1, so need to add i+1 for motor_number
 	  double cur_angle = angles_rad[offset_counter];
 	  m_Joint.SetRadian(i+1, cur_angle);
@@ -140,14 +139,3 @@ bool Playback::parse_file() {
 bool Playback::IsDone(){
   return !isPlaying && offset_counter >= angles_rad.size();
 }
-
-// Maybe we want these?
-// void LoadINISettings(minIni* ini);
-// void LoadINISettings(minIni* ini, const std::string &section);
-// void SaveINISettings(minIni* ini);
-// void SaveINISettings(minIni* ini, const std::string &section);
-
-
-
-
-

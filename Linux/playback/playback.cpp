@@ -28,8 +28,6 @@ int motion_initialization(MotionModule* playback){
     return -1;
   }
 
-  MotionManager::GetInstance()->SetEnable(false);
-
   MotionManager::GetInstance()->AddModule((MotionModule*)playback);	
 
   LinuxMotionTimer *motion_timer = new LinuxMotionTimer(MotionManager::GetInstance());
@@ -43,7 +41,6 @@ int motion_initialization(MotionModule* playback){
   // very first tick of the trajectory so that the JointData is accurately
   // reflecting goal position
 
-  
 
   // this is an offset into the params below
   int n = 0;
@@ -105,7 +102,7 @@ int motion_initialization(MotionModule* playback){
   printf("Press the ENTER key to begin!\n");
   getchar();
 
-  MotionManager::GetInstance()->SetEnable(true);
+  MotionManager::GetInstance()->SetEnable(true); // Sets motor speeds to 0. Crucial after syncwrite
 
 
   /*
@@ -147,12 +144,6 @@ int main(int argc, char** argv)
     printf("Failed to initialize control!\n");
     return -1;
   }
-
-
-
-  // this is frightening but I think it needs to wait for motion initialization to do stuff
-  //sleep(1);
-
 
   playback->Start();
 

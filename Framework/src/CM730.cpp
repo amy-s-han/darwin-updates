@@ -28,7 +28,9 @@ using namespace Robot;
 #define INST_SYNC_WRITE		(131)   // 0x83
 #define INST_BULK_READ      (146)   // 0x92
 
-
+// set everything in table to zero
+// table is an unsigned char of size MX28::MAXNUM_ADDRESS
+// read in statuses and store them in correct address in table
 BulkReadData::BulkReadData() :
         start_address(0),
         length(0),
@@ -38,6 +40,7 @@ BulkReadData::BulkReadData() :
         table[i] = 0;
 }
 
+// index into table and return what is in the bucket specified by the address
 int BulkReadData::ReadByte(int address)
 {
     if(address >= start_address && address < (start_address + length))
@@ -68,8 +71,10 @@ CM730::~CM730()
 	Disconnect();
 }
 
+// Transfer and receive packets
 int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int priority)
 {
+	// set priorities
 	if(priority > 1)
 		m_Platform->LowPriorityWait();
 	if(priority > 0)
@@ -81,9 +86,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 
 	txpacket[0] = 0xFF;
     txpacket[1] = 0xFF;
+    // store checksum in last bucket. (added 4 to length in line 85)
 	txpacket[length - 1] = CalculateChecksum(txpacket);
 
-	if(DEBUG_PRINT == true)
+	if(DEBUG_PRINT == true) // print out the instruction type
 	{
 		fprintf(stderr, "\nTX: ");
 		for(int n=0; n<length; n++)
@@ -130,21 +136,21 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 		}
 	}
 
-	if(length < (MAXNUM_TXPARAM + 6))
+	if(length < (MAXNUM_TXPARAM + 6)) //if length is less than max length
 	{
-		m_Platform->ClearPort();
-		if(m_Platform->WritePort(txpacket, length) == length)
-		{
-			if (txpacket[ID] != ID_BROADCAST)
+		m_Platform->ClearPort(); //calls tcflush(m_Socket_fd, TCIFLUSH)
+		if(m_Platform->WritePort(txpacket, length) == length) //writes it out to port
+		{   // if sucessfull write
+			if (txpacket[ID] != ID_BROADCAST) //if broadcast to specific motor
 			{
-				int to_length = 0;
+				int to_length = 0; 
 
 				if(txpacket[INSTRUCTION] == INST_READ)
 					to_length = txpacket[PARAMETER+1] + 6;
 				else
 					to_length = 6;
 
-				m_Platform->SetPacketTimeout(length);
+				m_Platform->SetPacketTimeout(length); //start timer
 
 				int get_length = 0;
 				if(DEBUG_PRINT == true)
@@ -172,7 +178,7 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 								break;
 						}
 
-						if(i == 0)
+						if(i == 0) //Successfully found header in above loop
 						{
 							// Check checksum
 							unsigned char checksum = CalculateChecksum(rxpacket);
@@ -186,8 +192,8 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 							
 							break;
 						}
-						else
-						{
+						else //failed to find packet in the beginning of new packet
+						{ // scoot everything over so that packet starts w/ header
 							for(int j = 0; j < (get_length - i); j++)
 								rxpacket[j] = rxpacket[j+i];
 							get_length -= i;
@@ -369,6 +375,7 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 		}
 	}
 
+	// release priorities
 	m_Platform->HighPriorityRelease();
     if(priority > 0)
         m_Platform->MidPriorityRelease();
@@ -378,6 +385,8 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 	return res;
 }
 
+// checksum is the logical not of the sum of everything from 
+// packet[2] to packet[LENGTH+3](This is the number of packets - 1)
 unsigned char CM730::CalculateChecksum(unsigned char *packet)
 {
 	unsigned char checksum = 0x00;
@@ -445,6 +454,7 @@ int CM730::BulkRead()
     }
 }
 
+// write out instruction to all motors
 int CM730::SyncWrite(int start_addr, int each_length, int number, int *pParam)
 {
 	unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
