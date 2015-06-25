@@ -89,13 +89,13 @@ int main(int argc, char** argv){
     int new_length = 0;
     int counter = 0;
     bool go = true;
-   
+    bool result;
 
   while(go){
     // printf("top of while. get_length = %d and to_length = %d\n", get_length, to_length);
+        result = false; //tells us if successful read
 
         new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
-
         get_length += new_length;
 
 	// printf("new length from port read: %d\n", new_length);
@@ -106,6 +106,7 @@ int main(int argc, char** argv){
                 unsigned char checksum = CalculateChecksum(rxpacket);
                 if(rxpacket[get_length -1] == checksum){
                     printf("Sucessful read\n");
+                    result = true;
                     for(int i = 0; i< 9; i++){
                       printf("item %d: %u \n", i, rxpacket[i]);
                     }

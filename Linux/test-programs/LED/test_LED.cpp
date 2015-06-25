@@ -21,7 +21,7 @@ unsigned char CalculateChecksum(unsigned char *packet)
     return (~checksum);
 }
 
-// for making color for led light
+// converts 255 rgb into appropriate color representation
 
 int MakeColor(int red, int green, int blue)
 {
