@@ -1,4 +1,4 @@
 # CMakeLists.txt for darwin/Linux/test-programs
 
-add_subdirectory(test_LED)
-add_subdirectory(test_read)
+add_subdirectory(LED)
+add_subdirectory(read)
