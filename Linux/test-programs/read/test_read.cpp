@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <cstdlib>
 #include "ports.h"
 
 using namespace std;
@@ -22,8 +23,29 @@ unsigned char CalculateChecksum(unsigned char *packet)
 }
 
 
+int MakeWord(int lowbyte, int highbyte)
+{
+    unsigned short word;
 
-int main(){
+    word = highbyte;
+    word = word << 8;
+    word = word + lowbyte;
+
+    return (int)word;
+}
+
+
+int main(int argc, char** argv){
+    int number_reads;
+    if(argc == 1){
+        //default read 5 instances of joint data
+        number_reads = 5;
+	printf("Default number of reads is 5\n");
+    } else {
+        number_reads = atoi(argv[1]);
+        printf("argv[1]: %d\n", number_reads);
+    }
+
 
     Port* port = new Port("/dev/ttyUSB0");
     if(port->OpenPort() == false){
@@ -48,18 +70,16 @@ int main(){
 
     unsigned char txpacket[] = {0xFF, 0xFF, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
     int length = txpacket[LENGTH] + 4;
-
-    printf("length is %d\n", length);
-    getchar();
     
     txpacket[length-1] = CalculateChecksum(txpacket);
 
     port->ClearPort();
 
-
     port->WritePort(txpacket, length);
 
     int to_length = txpacket[PARAMETER+1] + 6; 
+
+    printf("length is %d\n", length);
     printf("to_length = %d\n\n", to_length);
 
     //do we want a time out???
@@ -72,24 +92,28 @@ int main(){
    
 
   while(go){
-        printf("top of while. get_length = %d and to_length = %d\n", get_length, to_length);
+    // printf("top of while. get_length = %d and to_length = %d\n", get_length, to_length);
 
         new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
 
         get_length += new_length;
 
-        printf("new length from port read: %d\n", new_length);
+	// printf("new length from port read: %d\n", new_length);
 
-        if(get_length == to_length){
+        if(get_length == to_length){ //received a packet of correct length
             if(rxpacket[0] == 0xFF && rxpacket[1] == 0xFF){
-                //check checksum
+                //check checksum of incoming packet
                 unsigned char checksum = CalculateChecksum(rxpacket);
                 if(rxpacket[get_length -1] == checksum){
                     printf("Sucessful read\n");
                     for(int i = 0; i< 9; i++){
                       printf("item %d: %u \n", i, rxpacket[i]);
                     }
-                    if(counter == 5){
+                    
+                    int word = MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
+                    printf("Motor position: %d\n\n", word);
+
+                    if(counter >= number_reads){
                       printf("break\n");
                       go = false;
                       break;
@@ -99,8 +123,8 @@ int main(){
             }
         printf("Sleeping\n");
         sleep(1);
-	get_length = 0;
-        printf("get_length = %d, to_length = %d\n", get_length, to_length);
+        get_length = 0;
+        //printf("get_length = %d, to_length = %d\n", get_length, to_length);
         port->ClearPort();
         port->WritePort(txpacket, length);
         
