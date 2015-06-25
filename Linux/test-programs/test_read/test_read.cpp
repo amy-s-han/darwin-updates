@@ -2,6 +2,7 @@
 // read word: txpacket = {0xFF, 0xFF, id, 4, INST_READ, start address, 2, checksum}
 
 #include <stdio.h>
+#include <unistd.h>
 #include "ports.h"
 
 using namespace std;
@@ -45,7 +46,7 @@ int main(){
     //unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
     //txpacket = {0xFF, 0xFF, id, 4, INST_READ, start address, 2, checksum};
 
-    unsigned char txpacket[] = {0xFF, 0xFF, 0x01, 0x04, 0x02, 0x24, 0x02, 0};
+    unsigned char txpacket[] = {0xFF, 0xFF, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
     int length = txpacket[LENGTH] + 4;
 
     printf("length is %d\n", length);
@@ -59,17 +60,25 @@ int main(){
     port->WritePort(txpacket, length);
 
     int to_length = txpacket[PARAMETER+1] + 6; 
+    printf("to_length = %d\n\n", to_length);
 
     //do we want a time out???
     //port->SetPacketTimeout(length) 
 
     int get_length = 0;
+    int new_length = 0;
     int counter = 0;
-    while(1){
+    bool go = true;
+   
 
-        length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+  while(go){
+        printf("top of while. get_length = %d and to_length = %d\n", get_length, to_length);
 
-        get_length += length;
+        new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+
+        get_length += new_length;
+
+        printf("new length from port read: %d\n", new_length);
 
         if(get_length == to_length){
             if(rxpacket[0] == 0xFF && rxpacket[1] == 0xFF){
@@ -77,25 +86,26 @@ int main(){
                 unsigned char checksum = CalculateChecksum(rxpacket);
                 if(rxpacket[get_length -1] == checksum){
                     printf("Sucessful read\n");
-                for(int i = 0; i< 9; i++){
-                  printf("item %d: %u \n", i, rxpacket[i]);
-                }
-                if(counter == 10){
-                  break;
-                }
-                counter ++;
+                    for(int i = 0; i< 9; i++){
+                      printf("item %d: %u \n", i, rxpacket[i]);
+                    }
+                    if(counter == 5){
+                      printf("break\n");
+                      go = false;
+                      break;
+                    }
+                    counter ++;
                 }
             }
-
+        printf("Sleeping\n");
+        sleep(1);
+	get_length = 0;
+        printf("get_length = %d, to_length = %d\n", get_length, to_length);
+        port->ClearPort();
+        port->WritePort(txpacket, length);
+        
         }
     }
-
-    
-    for(int i = 0; i< 15; i++){
-      printf("item %d: %d\n", i, rxpacket[i]);
-    }
-
-
 
     printf("Press the ENTER key to close port!\n");
     getchar();
