@@ -80,40 +80,37 @@ int main(){
     // My attempt at cycling through colors 
     // Merp doesn't work yet
 
-    bool redDone = false;
-    bool greenDone = false;
-    bool blueDone = false;
+
+    double i[total] = {0, };
+    double j[total] = {0, };
+    double k[total] = {0, };
+
+    int count;
+
+    for(count = 0; count < total; count++){
+        i[count] = 255*sin(6.28*count/(total/2));
+        j[count] = 255*sin(6.28*count/(total/11));
+        k[count] = 255*sin(6.28*count/(total/21));
+    }
 
     int red = 0;
     int green = 0;
     int blue = 0;
 
-    while(!redDone || !greenDone || !blueDone){
-        if(!redDone && !greenDone && !blueDone){
-            blue++;
-            if(blue == 255){
-                blueDone = true;
-            }
-        } else if(!redDone && !greenDone){
-            green ++;
-            if(green == 255){
-                greenDone = true;
-            }
-        } else if(!redDone){
-            redDone ++;
-            if(red == 255){
-                redDone = true;
-            }
-        }
+    count = 0;
+    int newcolor;
 
+
+    while(count < total){
         port->ClearPort();
-        int newcolor = MakeColor(red, green, blue);
+        newcolor = MakeColor(i[count], j[count], k[count]);
         txpacket[6] = GetLowByte(newcolor);
         txpacket[7] = GetHighByte(newcolor);
         txpacket[8] = 0;
         txpacket[8] = CalculateChecksum(txpacket);
         port->WritePort(txpacket, 9);
-        usleep(30000);
+        usleep(10000);
+        count++;
     }
 
 
