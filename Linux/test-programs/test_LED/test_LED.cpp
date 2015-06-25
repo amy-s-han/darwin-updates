@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "ports.h"
+#include <math.h>
 
 using namespace std;
 
 #define LENGTH (3)
+#define total (2000)
 
 
 unsigned char CalculateChecksum(unsigned char *packet)
