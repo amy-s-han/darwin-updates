@@ -46,6 +46,77 @@ int MakeWord(int lowbyte, int highbyte)
     return (int)word;
 }
 
+//reads in 5 seconds of data and returns the last read word
+int ReadWord(Port *port){
+
+    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
+
+    //txpacket = {0xFF, 0xFF, id, 4, INST_READ, start address, 2, checksum};
+    unsigned char txpacket[] = {0xFF, 0xFF, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
+
+    int length = txpacket[LENGTH] + 4;
+    
+    txpacket[length-1] = CalculateChecksum(txpacket);
+
+    port->ClearPort();
+
+    port->WritePort(txpacket, length);
+
+    int to_length = txpacket[PARAMETER+1] + 6; 
+
+    printf("length is %d\n", length);
+    printf("to_length = %d\n\n", to_length);
+
+    int get_length = 0;
+    int new_length = 0;
+    int counter = 0;
+    bool go = true;
+    int word;
+    bool result = false;
+
+    while(go){
+
+        new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+
+        get_length += new_length;
+
+        if(get_length == to_length){ //received a packet of correct length
+            if(rxpacket[0] == 0xFF && rxpacket[1] == 0xFF){
+                //check checksum of incoming packet
+                unsigned char checksum = CalculateChecksum(rxpacket);
+                if(rxpacket[get_length -1] == checksum){
+                    printf("Sucessful read\n");
+                    result = true;
+                    
+                    word = MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
+                    printf("Motor position: %d\n\n", word);
+
+                    if(counter >= 5){
+                      printf("break\n");
+                      go = false;
+                      break;
+                    }
+                    counter ++;
+                }
+            }
+
+        sleep(1);
+        get_length = 0;
+        port->ClearPort();
+        port->WritePort(txpacket, length);
+        
+        }
+    }
+
+    if(!go && result){
+        printf("Sucessful read and return\n");
+        return word;
+    } else if (!go && !result){
+        printf("Failed read, returning bad number\n");
+        return -9999999;
+    }
+
+}
 
 int main(int argc, char** argv){
    
@@ -75,67 +146,12 @@ int main(int argc, char** argv){
     unsigned char i_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1B, 0x1F, 0xFF, 0};
 
     //read position first:
-    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
+    int word = ReadWord(port);
 
-    //txpacket = {0xFF, 0xFF, id, 4, INST_READ, start address, 2, checksum};
-
-    unsigned char txpacket[] = {0xFF, 0xFF, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
-    int length = txpacket[LENGTH] + 4;
-    
-    txpacket[length-1] = CalculateChecksum(txpacket);
-
-    port->ClearPort();
-
-    port->WritePort(txpacket, length);
-
-    int to_length = txpacket[PARAMETER+1] + 6; 
-
-    printf("length is %d\n", length);
-    printf("to_length = %d\n\n", to_length);
-
-    //do we want a time out???
-    //port->SetPacketTimeout(length) 
-
-    int get_length = 0;
-    int new_length = 0;
-    int counter = 0;
-    bool go = true;
-   	int word;
-
-  	while(go){
-
-        new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
-
-        get_length += new_length;
-
-        if(get_length == to_length){ //received a packet of correct length
-            if(rxpacket[0] == 0xFF && rxpacket[1] == 0xFF){
-                //check checksum of incoming packet
-                unsigned char checksum = CalculateChecksum(rxpacket);
-                if(rxpacket[get_length -1] == checksum){
-                    printf("Sucessful read\n");
-                    for(int i = 0; i< 9; i++){
-                      printf("item %d: %u \n", i, rxpacket[i]);
-                    }
-                    
-                    word = MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
-                    printf("Motor position: %d\n\n", word);
-
-                    if(counter >= 5){
-                      printf("break\n");
-                      go = false;
-                      break;
-                    }
-                    counter ++;
-                }
-            }
-        printf("Sleeping\n");
-        sleep(1);
-        get_length = 0;
-        port->ClearPort();
-        port->WritePort(txpacket, length);
-        
-        }
+    if(word == -9999999){
+        printf("bad read, terminating program.\n");
+        port->ClosePort();
+        return 0;
     }
 
     printf("Read angle as: %d, press enter to write new angle\n", word);
