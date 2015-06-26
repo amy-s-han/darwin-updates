@@ -1,7 +1,7 @@
 # CMakeLists.txt for darwin/Linux/test-programs/test_LED
 
 set(sources
-	alt_LED.cpp
+	test_LED.cpp
 	ports.cpp
 	)
 

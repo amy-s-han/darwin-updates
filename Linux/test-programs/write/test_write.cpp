@@ -70,7 +70,9 @@ int main(int argc, char** argv){
     // need to set MX28::P_TORQUE_ENABLE, MX28::P_P_GAIN
 
     unsigned char torque_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x18, 0, 0, 0};
-    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1C, 0x08, 0, 0};
+    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1C, 0x32, 0, 0};
+
+    unsigned char i_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1B, 0x1F, 0xFF, 0};
 
     //read position first:
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -136,13 +138,24 @@ int main(int argc, char** argv){
         }
     }
 
-    printf("Read angle as: %d, press enter to write new angle", word);
+    printf("Read angle as: %d, press enter to write new angle\n", word);
     getchar();
 
     // add some amount to the angle that was read in
     // split into low and high bytes
-    word += 10;
+    word += 175;
+ 
+
+    printf("New angle will be: %d, press enter to write new angle\n", word);
+    getchar();
+
+    port->ClearPort();
+    port->WritePort(p_gain_txpacket, 9);
+    port->ClearPort();
+    port->WritePort(i_gain_txpacket, 9);
+
     int value_low = GetLowByte(word);
+
     int value_high = GetHighByte(word);
 
     // now write position
