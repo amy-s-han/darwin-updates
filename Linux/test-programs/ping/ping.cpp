@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "ports.h"
 
 using namespace std;
@@ -19,6 +20,28 @@ unsigned char CalculateChecksum(unsigned char *packet)
     for(int i=2; i<packet[LENGTH]+3; i++ )
         checksum += packet[i];
     return (~checksum);
+}
+
+double getCurrentTime(){
+	struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
+}
+
+bool isTimeOut(double packetStartTime, double packetWaitTime){
+	double time;
+	time = getCurrentTime() - packetStartTime;
+	if(time < 0.0){
+		printf("error\n");
+		//need to set packet start time to getCurrentTime();
+	}
+
+	if(time > packetWaitTime){
+		return true;
+	}
+
+	return false;
 }
 
 bool Ping(int id, int *error, Port *port) {
@@ -60,14 +83,18 @@ bool Ping(int id, int *error, Port *port) {
     int word;
     bool result = false;
 
-    while(go){
-    	printf("sucess: %d, fails: %d\n", counter, fail_counter);
-    	if(fail_counter >=10){
+    // set packet time out:
+    double packetStartTime = getCurrentTime();
+    double packetWaitTime = 0.012 * (double)length + 5.0;
+    printf("Wait time is: %f\n", packetWaitTime);
 
-        	printf("Failed ping\n");
-    		go = false;
+    while(go){
+    	if(fail_counter >= 5){
+    		printf("failed ping\n");
     		break;
     	}
+
+    	printf("sucess: %d, fails: %d\n", counter, fail_counter);
 
         new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
 
@@ -80,21 +107,21 @@ bool Ping(int id, int *error, Port *port) {
                 if(rxpacket[get_length -1] == checksum){
                     printf("Successful read\n");
                     result = true;
-                    
-                    if(counter >= 3){
-                    	printf("Successful ping\n");
-                     	go = false;
-                     	break;
-                    }
+                    break;
                 }
             }
-        } else {
-        	fail_counter ++;
-        }
-        usleep(5000);
-        get_length = 0;
-        port->ClearPort();
-        port->WritePort(txpacket, length);
+	        get_length = 0;
+	        port->ClearPort();
+	        port->WritePort(txpacket, length);
+        } 
+        if(isTimeOut(packetStartTime, packetWaitTime)){
+        	printf("timeout!\n");
+        	fail_counter++;
+	        get_length = 0;
+	        packetStartTime = getCurrentTime();
+	        port->ClearPort();
+	        port->WritePort(txpacket, length);
+        }       
         
     }
 
