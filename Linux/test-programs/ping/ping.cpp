@@ -54,14 +54,7 @@ bool Ping(int id, int *error, Port *port) {
     txpacket[ID]           = (unsigned char)id;
     txpacket[INSTRUCTION]  = 1;
     txpacket[LENGTH]       = 2;
-
-	// result = TxRxPacket(txpacket, rxpacket, 2);
-	// if(result == SUCCESS && txpacket[ID] != ID_BROADCAST)
-	// {		
-	// 	if(error != 0)
-	// 		*error = (int)rxpacket[ERRBIT];
-	// }
-
+    
 	int length = txpacket[LENGTH] + 4;
     
     txpacket[length-1] = CalculateChecksum(txpacket);
@@ -77,10 +70,8 @@ bool Ping(int id, int *error, Port *port) {
 
     int get_length = 0;
     int new_length = 0;
-    int counter = 0;
     int fail_counter = 0;
     bool go = true;
-    int word;
     bool result = false;
 
     // set packet time out:
@@ -93,8 +84,6 @@ bool Ping(int id, int *error, Port *port) {
     		printf("failed ping\n");
     		break;
     	}
-
-    	printf("sucess: %d, fails: %d\n", counter, fail_counter);
 
         new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
 
