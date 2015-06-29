@@ -55,11 +55,16 @@ bool Ping(int id, int *error, Port *port) {
     int get_length = 0;
     int new_length = 0;
     int counter = 0;
+    int fail_counter = 0;
     bool go = true;
     int word;
     bool result = false;
 
     while(go){
+    	if(fail_counter >=10){
+    		go = false;
+    		break;
+    	}
 
         new_length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
 
@@ -77,16 +82,16 @@ bool Ping(int id, int *error, Port *port) {
                      	go = false;
                      	break;
                     }
-                    counter ++;
                 }
             }
-
+        } else {
+        	fail_counter ++;
+        }
         usleep(5000);
         get_length = 0;
         port->ClearPort();
         port->WritePort(txpacket, length);
         
-        }
     }
 
     for(int i = 0; i < 10; i ++){

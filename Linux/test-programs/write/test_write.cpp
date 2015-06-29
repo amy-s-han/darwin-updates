@@ -46,7 +46,7 @@ int MakeWord(int lowbyte, int highbyte)
     return (int)word;
 }
 
-//reads in 5 seconds of data and returns the last read word
+//samples data 5 times and returns the last read word
 int ReadWord(Port *port){
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -92,7 +92,6 @@ int ReadWord(Port *port){
                     printf("Motor position: %d\n\n", word);
 
                     if(counter >= 5){
-                      printf("break\n");
                       go = false;
                       break;
                     }
@@ -100,7 +99,7 @@ int ReadWord(Port *port){
                 }
             }
 
-        sleep(1);
+        usleep(50000);
         get_length = 0;
         port->ClearPort();
         port->WritePort(txpacket, length);
@@ -141,11 +140,12 @@ int main(int argc, char** argv){
     // need to set MX28::P_TORQUE_ENABLE, MX28::P_P_GAIN
 
     unsigned char torque_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x18, 0, 0, 0};
-    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1C, 0x32, 0, 0};
+    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1C, 0x08, 0, 0};
 
-    unsigned char i_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1B, 0x1F, 0xFF, 0};
 
-    //read position first:
+    //do we want a time out???
+    //port->SetPacketTimeout(length) 
+
     int word = ReadWord(port);
 
     if(word == -9999999){
@@ -154,24 +154,13 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    printf("Read angle as: %d, press enter to write new angle\n", word);
+    printf("Read angle as: %d, press enter to write new angle", word);
     getchar();
 
     // add some amount to the angle that was read in
     // split into low and high bytes
-    word += 175;
- 
-
-    printf("New angle will be: %d, press enter to write new angle\n", word);
-    getchar();
-
-    port->ClearPort();
-    port->WritePort(p_gain_txpacket, 9);
-    port->ClearPort();
-    port->WritePort(i_gain_txpacket, 9);
-
+    word += 10;
     int value_low = GetLowByte(word);
-
     int value_high = GetHighByte(word);
 
     // now write position
@@ -186,7 +175,9 @@ int main(int argc, char** argv){
 
     port->ClearPort();
 
-    port->WritePort(txpacket_write, txlength);
+    int result = port->WritePort(txpacket_write, txlength);
+
+    printf("Write out to port result = %d\n", result);
 
     printf("Press the ENTER key to close port!\n");
     getchar();
