@@ -61,7 +61,10 @@ bool Ping(int id, int *error, Port *port) {
     bool result = false;
 
     while(go){
+    	printf("sucess: %d, fails: %d\n", counter, fail_counter);
     	if(fail_counter >=10){
+
+        	printf("Failed ping\n");
     		go = false;
     		break;
     	}
@@ -75,10 +78,11 @@ bool Ping(int id, int *error, Port *port) {
                 //check checksum of incoming packet
                 unsigned char checksum = CalculateChecksum(rxpacket);
                 if(rxpacket[get_length -1] == checksum){
-                    printf("Sucessful read\n");
+                    printf("Successful read\n");
                     result = true;
                     
-                    if(counter >= 5){
+                    if(counter >= 3){
+                    	printf("Successful ping\n");
                      	go = false;
                      	break;
                     }
@@ -96,12 +100,6 @@ bool Ping(int id, int *error, Port *port) {
 
     for(int i = 0; i < 10; i ++){
     	printf("Index %d: %d\n", i, rxpacket[i]);
-    }
-
-    if(!go && result){
-        printf("Sucessful ping and return\n");
-    } else if (!go && !result){
-        printf("Failed ping, returning bad number\n");
     }
 
     return result;
