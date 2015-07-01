@@ -71,7 +71,6 @@ bool Ping(int id, int *error, Port *port) {
     int get_length = 0;
     int new_length = 0;
     int fail_counter = 0;
-    bool go = true;
     bool result = false;
 
     // set packet time out:
@@ -79,7 +78,7 @@ bool Ping(int id, int *error, Port *port) {
     double packetWaitTime = 0.012 * (double)length + 5.0;
     printf("Wait time is: %f\n", packetWaitTime);
 
-    while(go){
+    while(1){
     	if(fail_counter >= 5){
     		printf("failed ping\n");
     		break;

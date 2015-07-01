@@ -28,9 +28,7 @@ using namespace Robot;
 #define INST_SYNC_WRITE		(131)   // 0x83
 #define INST_BULK_READ      (146)   // 0x92
 
-// set everything in table to zero
-// table is an unsigned char of size MX28::MAXNUM_ADDRESS
-// read in statuses and store them in correct address in table
+
 BulkReadData::BulkReadData() :
         start_address(0),
         length(0),
