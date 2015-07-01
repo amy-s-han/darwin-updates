@@ -163,7 +163,6 @@ void bulkread(Port *port, BulkReadData *BulkData){
     }
 
     BulkReadTxPacket[LENGTH]          = (number * 3) + 3;  
-    printf("txpacket[length]:%d\n", BulkReadTxPacket[LENGTH]);
 
     int length = BulkReadTxPacket[LENGTH] + 4;
 
@@ -175,8 +174,6 @@ void bulkread(Port *port, BulkReadData *BulkData){
         int to_length = 0;
         int num = (BulkReadTxPacket[LENGTH]-3) / 3;
 	
-	printf("txpacketlength: %d, num: %d\n", BulkReadTxPacket[LENGTH], num);
-
         for(int i = 0; i < num; i++){
             int _id = BulkReadTxPacket[PARAMETER+(3*i)+2];
             int _len = BulkReadTxPacket[PARAMETER+(3*i)+1];
@@ -184,10 +181,8 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
             to_length += _len + 6;
             BulkData[_id].length = _len;
-	    printf("_id: %d, _len: %d, _addr: %d\n",_id,  _len, _addr);
             BulkData[_id].start_address = _addr;
         }
-	printf("to length: %d\n", to_length);
         //set packet time out:
         double packetStartTime = getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
@@ -197,7 +192,6 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
-	    printf("length: %d\n", length);
             get_length += length;
 
             if(get_length == to_length){
@@ -232,12 +226,11 @@ void bulkread(Port *port, BulkReadData *BulkData){
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-		printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+		        printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
-
+                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
                     }
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
@@ -305,10 +298,5 @@ int main(int argc, char** argv){
     }
 
     bulkread(port, BulkData);
-
-    for(int j = 0; j<49; j++){
-    
-      printf("j:%d, data: %d\n", j, BulkData[200].ReadByte(j));
-    }
       
 }
