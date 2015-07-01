@@ -67,9 +67,6 @@ bool Ping(int id, int *error, Port *port) {
 
     int to_length = 6;
 
-    printf("length is %d\n", length);
-    printf("to_length = %d\n\n", to_length);
-
     int get_length = 0;
     int new_length = 0;
     int fail_counter = 0;
@@ -79,7 +76,6 @@ bool Ping(int id, int *error, Port *port) {
     // set packet time out:
     double packetStartTime = getCurrentTime();
     double packetWaitTime = 0.012 * (double)length + 5.0;
-    printf("Wait time is: %f\n", packetWaitTime);
 
     while(go){
         if(fail_counter >= 5){
@@ -96,7 +92,7 @@ bool Ping(int id, int *error, Port *port) {
                 //check checksum of incoming packet
                 unsigned char checksum = CalculateChecksum(rxpacket);
                 if(rxpacket[get_length -1] == checksum){
-                    printf("Successful read\n");
+                    printf("Successful ping\n");
                     result = true;
                     break;
                 }
@@ -106,7 +102,7 @@ bool Ping(int id, int *error, Port *port) {
             port->WritePort(txpacket, length);
         } 
         if(isTimeOut(packetStartTime, packetWaitTime)){
-            printf("timeout!\n");
+	  //printf("timeout!\n");
             fail_counter++;
             get_length = 0;
             packetStartTime = getCurrentTime();
@@ -116,17 +112,13 @@ bool Ping(int id, int *error, Port *port) {
         
     }
 
-    for(int i = 0; i < 10; i ++){
-        printf("Index %d: %d\n", i, rxpacket[i]);
-    }
-
     return result;
 }
 
 void bulkread(Port *port, BulkReadData *BulkData){
 
     // [0xFF, 0xFF, ID, LENGTH, INSTRUCTION/ERRBIT, PARAMETER, ...]
-    // m_BulkReadTxPacket[0xFF, 0xFF, 0xC8, LENGTH, 0x92, 0x0, 
+    // m_BulkReadTxPacket[0xFF, 0xFF, 0xFE, LENGTH, 0x92, 0x0, 
 
     // make bulkread packet
     int number = 0;
@@ -136,9 +128,9 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
     BulkReadTxPacket[0] = 0xFF;
     BulkReadTxPacket[1] = 0xFF;
-    BulkReadTxPacket[2] = 0xC8;
-    BulkReadTxPacket[4] = 0x92;
-    BulkReadTxPacket[5] = 0x0;
+    BulkReadTxPacket[ID] = 0xFE;
+    BulkReadTxPacket[INSTRUCTION] = 0x92;
+    BulkReadTxPacket[PARAMETER] = 0x0;
     
     if(Ping(0xC8, 0, port)){
         BulkReadTxPacket[PARAMETER+3*number+1] = 30;
@@ -147,35 +139,35 @@ void bulkread(Port *port, BulkReadData *BulkData){
         number++;
     }
 
-    /* uncomment if you have fsr sensors
-    if(Ping(ID_L_FSR, 0, port) == SUCCESS)
-    {
+    if(Ping(70, 0, port)){
         BulkReadTxPacket[PARAMETER+3*number+1] = 10;               // length
-        BulkReadTxPacket[PARAMETER+3*number+2] = ID_L_FSR;         // id
-        BulkReadTxPacket[PARAMETER+3*number+3] = P_FSR1_L;    // start address
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x70;         // id
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;    // start address
         number++;
     }
 
-    if(Ping(ID_R_FSR, 0, port) == SUCCESS)
-    {
+    if(Ping(0x6F, 0, port)){
         BulkReadTxPacket[PARAMETER+3*number+1] = 10;               // length
-        BulkReadTxPacket[PARAMETER+3*number+2] = ID_R_FSR;   // id
-        BulkReadTxPacket[PARAMETER+3*number+3] = P_FSR1_L;    // start address
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x6F;   // id
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;    // start address
         number++;
     }
-    */
+    
 
-    BulkReadTxPacket[3]          = (number * 3) + 3;  
+    BulkReadTxPacket[LENGTH]          = (number * 3) + 3;  
+    printf("txpacket[length]:%d\n", BulkReadTxPacket[LENGTH]);
 
     int length = BulkReadTxPacket[LENGTH] + 4;
 
-	BulkReadTxPacket[length - 1] = CalculateChecksum(BulkReadTxPacket);
+    BulkReadTxPacket[length - 1] = CalculateChecksum(BulkReadTxPacket);
 
 
     port->ClearPort(); //calls tcflush(m_Socket_fd, TCIFLUSH)
 	if(port->WritePort(BulkReadTxPacket, length) == length){
         int to_length = 0;
         int num = (BulkReadTxPacket[LENGTH]-3) / 3;
+	
+	printf("txpacketlength: %d, num: %d\n", BulkReadTxPacket[LENGTH], num);
 
         for(int i = 0; i < num; i++){
             int _id = BulkReadTxPacket[PARAMETER+(3*i)+2];
@@ -184,9 +176,10 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
             to_length += _len + 6;
             BulkData[_id].length = _len;
+	    printf("_id: %d, _len: %d, _addr: %d\n",_id,  _len, _addr);
             BulkData[_id].start_address = _addr;
         }
-
+	printf("to length: %d\n", to_length);
         //set packet time out:
         double packetStartTime = getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
@@ -196,6 +189,7 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+	    printf("length: %d\n", length);
             get_length += length;
 
             if(get_length == to_length){
@@ -230,10 +224,11 @@ void bulkread(Port *port, BulkReadData *BulkData){
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-
+		printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
+			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
 
                     }
 
@@ -303,5 +298,9 @@ int main(int argc, char** argv){
 
     bulkread(port, BulkData);
 
-
+    for(int j = 0; j<49; j++){
+    
+      printf("j:%d, data: %d\n", j, BulkData[200].ReadByte(j));
+    }
+      
 }
