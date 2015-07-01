@@ -133,26 +133,34 @@ void bulkread(Port *port, BulkReadData *BulkData){
     BulkReadTxPacket[PARAMETER] = 0x0;
     
     if(Ping(0xC8, 0, port)){
-        BulkReadTxPacket[PARAMETER+3*number+1] = 30;
-        BulkReadTxPacket[PARAMETER+3*number+2] = 0xC8;
-        BulkReadTxPacket[PARAMETER+3*number+3] = 24; //P_DXL_POWER = 24
+        BulkReadTxPacket[PARAMETER+3*number+1] = 30; //length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0xC8; // ID_CM
+        BulkReadTxPacket[PARAMETER+3*number+3] = 24; //P_DXL_POWER
         number++;
     }
 
     if(Ping(70, 0, port)){
-        BulkReadTxPacket[PARAMETER+3*number+1] = 10;               // length
-        BulkReadTxPacket[PARAMETER+3*number+2] = 0x70;         // id
-        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;    // start address
+        BulkReadTxPacket[PARAMETER+3*number+1] = 10;    // length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x70;  // ID_L_FSR
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;  // start address P_FSR1_L
         number++;
     }
 
     if(Ping(0x6F, 0, port)){
-        BulkReadTxPacket[PARAMETER+3*number+1] = 10;               // length
-        BulkReadTxPacket[PARAMETER+3*number+2] = 0x6F;   // id
-        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;    // start address
+        BulkReadTxPacket[PARAMETER+3*number+1] = 10;     // length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x6F;   // id ID_R_FSR
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;   // start address P_FSR1_L
         number++;
     }
     
+    for(int id = 1; id < 20; id++){ //NUMBER OF JOINTS = 20
+       
+       BulkReadTxPacket[PARAMETER+3*number+1] = 23;  // length
+       BulkReadTxPacket[PARAMETER+3*number+2] = id; // id
+       BulkReadTxPacket[PARAMETER+3*number+3] = 26;  // start at CCW_COMPLIANCE_MARGIN
+       number++;
+        
+    }
 
     BulkReadTxPacket[LENGTH]          = (number * 3) + 3;  
     printf("txpacket[length]:%d\n", BulkReadTxPacket[LENGTH]);
