@@ -115,7 +115,7 @@ bool Ping(int id, int *error, Port *port) {
     return result;
 }
 
-void bulkread(Port *port, BulkReadData *BulkData){
+void bulkread(Port *port){
 
     // [0xFF, 0xFF, ID, LENGTH, INSTRUCTION/ERRBIT, PARAMETER, ...]
     // m_BulkReadTxPacket[0xFF, 0xFF, 0xFE, LENGTH, 0x92, 0x0, 
@@ -168,6 +168,8 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
     BulkReadTxPacket[length - 1] = CalculateChecksum(BulkReadTxPacket);
 
+    //finish making bulkread packet
+
 
     port->ClearPort(); //calls tcflush(m_Socket_fd, TCIFLUSH)
 	if(port->WritePort(BulkReadTxPacket, length) == length){
@@ -180,22 +182,21 @@ void bulkread(Port *port, BulkReadData *BulkData){
             int _addr = BulkReadTxPacket[PARAMETER+(3*i)+3];
 
             to_length += _len + 6;
-            BulkData[_id].length = _len;
-            BulkData[_id].start_address = _addr;
+            port->BulkData[_id].length = _len;
+            port->BulkData[_id].start_address = _addr;
         }
         //set packet time out:
         double packetStartTime = getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
 
         int get_length = 0;
-        bool result = false;
 
+	printf("getlength: %d, tolength: %d\n", get_length, to_length);
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
             get_length += length;
 
             if(get_length == to_length){
-                result = true; //success
                 break;
             } else {
                 if(isTimeOut(packetStartTime, packetWaitTime)){
@@ -210,7 +211,7 @@ void bulkread(Port *port, BulkReadData *BulkData){
 
         for(int i = 0; i < num; i++){
             int _id = BulkReadTxPacket[PARAMETER+(3*i)+2];
-            BulkData[_id].error = -1;
+            port->BulkData[_id].error = -1;
         }
 
         while(1){
@@ -226,14 +227,14 @@ void bulkread(Port *port, BulkReadData *BulkData){
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-		        printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+		printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
-                        BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+                        port->BulkData[rxpacket[ID]].table[port->BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
+			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
                     }
 
-                    BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
+                    port->BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
                     int cur_packet_length = LENGTH + 1 + rxpacket[LENGTH];
                     to_length = get_length - cur_packet_length;
@@ -291,12 +292,6 @@ int main(int argc, char** argv){
     printf("Finshed dxl power up. Press enter\n");
     getchar();
 
-    // create bulk read data structure
-    BulkReadData BulkData[254]; // ID_BROADCAST = 254
-    for(int i = 0; i < 254; i++){
-        BulkData[i] = BulkReadData();
-    }
-
-    bulkread(port, BulkData);
+    bulkread(port);
       
 }
