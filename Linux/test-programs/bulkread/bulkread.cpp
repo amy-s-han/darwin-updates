@@ -191,6 +191,7 @@ void bulkread(Port *port){
 
         int get_length = 0;
 
+	printf("getlength: %d, tolength: %d\n", get_length, to_length);
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
             get_length += length;
@@ -226,11 +227,11 @@ void bulkread(Port *port){
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-		        printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+		printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         port->BulkData[rxpacket[ID]].table[port->BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
                     }
 
                     port->BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];

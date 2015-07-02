@@ -107,17 +107,19 @@ int read(Port *port, unsigned char *txpacket, unsigned char *rxpacket){
         int fail_counter = 0; // fail counter for ping
         int length = 0;
         
+	printf("getlength: %d, tolength: %d\n", get_length, to_length);
         // set packet time out:
         double packetStartTime = getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
 
         while(1){ // loop for receiving packet
-            if(fail_counter >= 5){ //failed reading 5 times. return.
-                if(txpacket[INSTRUCTION] == PING){
-                    printf("failed ping\n");
-                }
+	  if(fail_counter >= 5){
+	    if(txpacket[INSTRUCTION] == PING){ 
+	      //failed reading 5 times. return.
+               printf("failed ping\n");
+	     }
                 return 0;
-            }
+           }
 
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
 
@@ -148,12 +150,13 @@ int read(Port *port, unsigned char *txpacket, unsigned char *rxpacket){
                     } else {
                         printf("rxpacket corrupt\n");
                     }
-
-                    fail_counter++;
-                    get_length = 0;
-                    packetStartTime = getCurrentTime();
-                    port->ClearPort();
-                    port->WritePort(txpacket, length);
+		    if(txpacket[INSTRUCTION] != BULK_READ){
+		      fail_counter++;
+		      get_length = 0;
+		      packetStartTime = getCurrentTime();
+		      port->ClearPort();
+		      port->WritePort(txpacket, length);
+		    }
                 }       
             }
         }
@@ -220,7 +223,7 @@ int read(Port *port, unsigned char *txpacket, unsigned char *rxpacket){
                 get_length -= i;
             }
         }
-
+	return length;
     }
 }
 
@@ -240,12 +243,9 @@ bool Ping(int id, int *error, Port *port) {
     txpacket[length-1] = CalculateChecksum(txpacket);
 
     int result = read(port, txpacket, rxpacket);
-    printf("result inside ping: %d\n", result);
     if( result == 0){
-        printf("inside ping - failed ping\n");
         return false;
     } else {
-        printf("inside ping - successful ping\n");
         return true;
     }
 }
