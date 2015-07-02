@@ -139,9 +139,19 @@ int main(int argc, char** argv){
     // motor initializations:
     // need to set MX28::P_TORQUE_ENABLE, MX28::P_P_GAIN
 
-    unsigned char torque_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x18, 0, 0, 0};
-    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1C, 0x08, 0, 0};
+    unsigned char torque_txpacket[] = {0xFF, 0xFF, 0x05, 0x04, 0x03, 0x18, 0x01, 0};
+    unsigned char p_gain_txpacket[] = {0xFF, 0xFF, 0x05, 0x04, 0x03, 0x1C, 0xFF, 0};
+    torque_txpacket[7] = CalculateChecksum(torque_txpacket);
+    p_gain_txpacket[7] = CalculateChecksum(p_gain_txpacket); 
 
+    usleep(2000);
+    port->ClearPort();
+    port->WritePort(torque_txpacket, 8);
+    usleep(2000);
+
+    port->ClearPort();
+    port->WritePort(p_gain_txpacket, 8);
+    usleep(2000);
 
     //do we want a time out???
     //port->SetPacketTimeout(length) 
@@ -159,25 +169,27 @@ int main(int argc, char** argv){
 
     // add some amount to the angle that was read in
     // split into low and high bytes
-    word += 10;
+    word += 200;
     int value_low = GetLowByte(word);
     int value_high = GetHighByte(word);
 
     // now write position
 
-    //txpacket_write = {0xFF, 0xFF, joint_id, 5, INST_WRITE, start address, value low, value high, checksum};
+    // txpacket_write = {0xFF, 0xFF, joint_id, 5, INST_WRITE, start address, value low, value high, checksum};
     // 			 {header, header, id, length = 5, INST_WRITE = 3, ...}
     // want start_address to be MX28::P_GOAL_POSITION_L
-    unsigned char txpacket_write[] = {0xFF, 0xFF, 0x14, 0x05, 0x03, 0x1E, (unsigned char)value_low, (unsigned char)value_high, 0};
+  
+    unsigned char txpacket_write[] = {0xFF, 0xFF, 0x05, 0x05, 0x03, 0x1E, 0xD0, 0x07, 0};
     int txlength = txpacket_write[LENGTH] + 4;
     
-    txpacket_write[txlength-1] = CalculateChecksum(txpacket_write);
-
+    txpacket_write[8] = CalculateChecksum(txpacket_write);
+   
     port->ClearPort();
+    port->WritePort(txpacket_write, 9);
+    usleep(2000);
+  //  int result = port->WritePort(txpacket_write, txlength);
 
-    int result = port->WritePort(txpacket_write, txlength);
-
-    printf("Write out to port result = %d\n", result);
+   // printf("Write out to port result = %d\n", result);
 
     printf("Press the ENTER key to close port!\n");
     getchar();

@@ -6,16 +6,20 @@
 * DONE	Addresses enum --- needs CM730 commands as well
 * DONE	Joints enum --- needs CM730 as well
 * DONE	Instruction enum
-*
-*   Q:  Do the enums need a type?
-*	Or is this just an efficient define?
-*
-*	copy paste makepacket, bulk read, sync write in
+*	
+* 	Pass in port on set_things	
+* 	Add:	Set/Get_Data
+*		Initialize
+*		RegWrite/Action/Reset
 */
 
-#define MAXNUM_TXPARAM (256)
-#define MAXNUM_RXPARAM (1024)
-#define LENGTH         (3)
+#define MAXNUM_TXPARAM 	(256)
+#define MAXNUM_RXPARAM 	(1024)
+#define ID		(2)
+#define LENGTH         	(3)
+#define INSTRUCTIONS	(4)
+#define ERRBIT		(4)
+#define PARAMETER	(5)
 
 enum{
 	MODEL_NUMBER_L		=0,
@@ -63,6 +67,7 @@ enum{
 	LOCK			=47,
 	PUNCH_L			=48,
 	PUNCH_H			=49,
+	MX28_MAXNUM_ADDRESS
 };
 
 
@@ -87,8 +92,7 @@ enum{
 	L_ANKLE_ROLL    	= 18,
 	HEAD_PAN        	= 19,
 	HEAD_TILT       	= 20,
-	ID_CM			= 200,
-	ID_BROADCAST		= 254
+	NUM_JOINTS
 };
 
 enum{
@@ -160,6 +164,7 @@ enum{
 	ADC14_H			= 78,
 	ADC15_L			= 79,
 	ADC15_H			= 80,
+	MAX_NUM_ADDRESS	
 };
 
 enum{
@@ -247,7 +252,7 @@ void SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* 
 
 /******************************************************
  * Converts 255 value rgb values into a 2 byte color  *
- * Usefull for Head (0x1A) and Eye (0x1C) LEDs        *
+ * Useful for Head (0x1A) and Eye (0x1C) LEDs         *
  ******************************************************/
 
 int MakeColor(int red, int green, int blue)
@@ -258,4 +263,45 @@ int MakeColor(int red, int green, int blue)
 
     return (int)(((b>>3)<<10)|((g>>3)<<5)|(r>>3));
 }
+
+
+/*******************************************************
+ * Converts an angle given in degrees into motor ticks *
+ * And then sends a write packet to the given motor    *
+ *******************************************************/
+void SetJointAngle(unsigned char joint_ID, unsigned char goal_angle, port port){
+    unsigned char angle_packet[9] = {0, };
+    goal_ticks = goal_angle * 11.378; // 4096/360
+    unsigned char params[2] = {GetLowByte(goal_ticks), GetHighByte(goal_ticks)}; 
+    MakePacket(angle_packet, joint_ID, 2, WRITE, GOAL_POSITION_L, params);
+}
+
+void Set_P_Gain(unsigned char joint_ID, P_Value){
+    unsigned char P_packet[8] = {0, };
+    MakePacket(PID_packet, joint_ID, 1, WRITE, P_GAIN, &P_Value); // Pass in pointer b/c it expects a char*
+}
+
+void Set_I_Gain(unsigned char joint_ID, I_Value){
+    unsigned char I_packet[8] = {0, };
+    MakePacket(PID_packet, joint_ID, 1, WRITE, I_GAIN, &I_Value); // Pass in pointer b/c it expects a char*
+}
+
+void Set_D_Gain(unsigned char joint_ID, D_Value){
+    unsigned char D_packet[8] = {0, };
+    MakePacket(PID_packet, joint_ID, 1, WRITE, D_GAIN, &D_Value); // Pass in pointer b/c it expects a char*
+}
+
+void Set_PID_Gain(unsigned char joint_ID, P_Value, I_Value, D_Value){
+    unsigned char PID_packet[10] = {0, };
+    unsigned char params[3] = {P_Value, I_Value, D_Value};
+    MakePacket(PID_packet, joint_ID, 1, WRITE, D_GAIN, params);
+}
+
+
+
+
+
+
+
+
 
