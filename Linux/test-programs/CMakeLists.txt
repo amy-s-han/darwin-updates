@@ -5,4 +5,5 @@ add_subdirectory(read)
 add_subdirectory(write)
 add_subdirectory(bulkread)
 add_subdirectory(ping)
+add_subdirectory(all-reads)
 
