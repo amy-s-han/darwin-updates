@@ -305,7 +305,58 @@ void Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled){
 
 
 
+int Init_to_Pose(){
+    int temp = 0;  // To be returned
+    unsigned char IDnum;
+    unsigned char initpacket[108] = {0, };
+    unsigned char initparams[100] = {0, };
 
+    // Torque enable
+    for(IDnum = 0; IDnum < 21; IDnum++){
+       initparams[2*IDnum] = IDnum+1;
+       initparams[2*IDnum+1] = 0x01;
+    }
+    unsigned char paramlength = 1;
+    unsigned char initnumparams = 40;
+    SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
+    port->ClearPort();
+    port->WritePort(initpacket, 48);
+    usleep(2000);
+
+    // Starting position and speed
+    for(int z = 0; z < 20; z++){
+        initparams[5*z] = z+1;
+        initparams[5*z+1] = 0x00;
+        initparams[5*z+2] = 0x08;
+        initparams[5*z+3] = 0x40;
+        initparams[5*z+4] = 0x00;
+    }
+    SyncWrite(initpacket, 0x1E, initparams, 100, 4);
+    usleep(2000);
+    port->ClearPort();
+    if(port->WritePort(initpacket, 108)==108)
+        temp = 1;
+        
+    // Red means stop
+    int color = MakeColor(255, 0, 0);
+    unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
+
+    MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
+    port->ClearPort();
+    port->WritePort(initpacket, 9);
+    sleep(2);
+    
+    // Green means go
+    color = MakeColor(0, 255, 0); 
+    initpacket[6] = GetLowByte(color);
+    initpacket[7] = GetHighByte(color);
+    initpacket[8] = CalculateChecksum(initpacket);
+    port->ClearPort();
+    port->WritePort(initpacket, 9);
+    usleep(2000);   
+  
+    return temp;
+}
 
 
 
