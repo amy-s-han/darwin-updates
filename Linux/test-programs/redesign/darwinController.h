@@ -27,7 +27,7 @@ class DarwinController {
 		Port *port;
         BulkReadData *BulkRead;
 		BulkReadData BulkData[ID_BROADCAST]; //254
-        unsigned char BulkReadTxPacket[266] = {0, };
+        unsigned char BulkReadTxPacket[266];
 
 		DarwinController();
 		~DarwinController();
