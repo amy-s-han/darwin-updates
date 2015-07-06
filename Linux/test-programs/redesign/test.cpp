@@ -19,6 +19,9 @@ int main(int argc, char** argv){
 		return 0;
 	}
 
+
+    darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
+
 	unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 	unsigned char txpacketread[] = {0, 0, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
 

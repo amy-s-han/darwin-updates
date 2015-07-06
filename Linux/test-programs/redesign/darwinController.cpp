@@ -60,8 +60,6 @@ DarwinController::DarwinController(){
         BulkData[i] = BulkReadData();
     }
 
-    MakeBulkPacket(BulkReadTxPacket);
-
 }
 
 DarwinController::~DarwinController(){
