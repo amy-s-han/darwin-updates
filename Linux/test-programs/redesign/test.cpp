@@ -25,10 +25,15 @@ int main(int argc, char** argv){
 	printf("\n~~~ Testing MakeBulkPacket ~~~\n");
     darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
 
-
+    /*
 	printf("\n~~~ Testing InitToPose ~~~\n");
 	darCon->InitToPose();
 
+	*/
+
+	printf("Press ENTER to continue testing.\n");
+	getchar();
+	
 
     printf("\n~~~ Testing Read ~~~\n");
 	unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -87,8 +92,7 @@ int main(int argc, char** argv){
 
 	printf("result3: %d\n", result3);
 
-	printf("Press ENTER to continue testing.\n");
-	getchar();
+	
 
 
     

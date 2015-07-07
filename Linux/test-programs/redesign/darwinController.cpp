@@ -381,13 +381,16 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
         if(txpacket[INSTRUCTION] != BULK_READ){
             // if it isn't bulkread, must return here
-            return get_length;
+            return length;
         } 
 
         for(int i = 0; i < num; i++){
             int _id = txpacket[PARAMETER+(3*i)+2];
             BulkData[_id].error = -1;
         }
+
+        printf("Bulkread return length: %d\n", get_length);
+        int return_length = get_length;
 
         while(1){ // this loop is purely for bulkread
             int i;
@@ -441,7 +444,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 get_length -= i;
             }
         }
-    return get_length;
+    return return_length;
     }
 }
 
