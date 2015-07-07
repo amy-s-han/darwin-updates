@@ -110,67 +110,6 @@ void DarwinController::ClosePort(){
     port.ClosePort();
 }
 
-// //InitToPose - gently moves Darwin into a ready position
-// bool DarwinController::InitToPose(){
-
-//     unsigned char initpacket[108] = {0, };
-//     unsigned char initparams[100] = {0, };
-
-//     // Torque enable
-//     for(int IDnum = 0; IDnum < 21; IDnum++){
-//        initparams[2*IDnum] = (unsigned char)(IDnum+1); // +1 because motors start at 1
-//        initparams[2*IDnum+1] = 0x01;
-//     }
-//     unsigned char paramlength = 1;
-//     unsigned char initnumparams = 40;
-    
-//     int result = SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
-//     printf("Result: %d\n", result);
-//     if(result != 48){
-//         printf("Failed init to pose! Failed Torque Enable!\n");
-//         return false;
-//     }
-
-//     usleep(2000);
-
-//     // Starting position and speed
-//     for(int z = 0; z < 20; z++){
-//         initparams[5*z] = z+1;
-//         initparams[5*z+1] = 0x00;
-//         initparams[5*z+2] = 0x08;
-//         initparams[5*z+3] = 0x40;
-//         initparams[5*z+4] = 0x00;
-//     }
-   
-    
-//     port.ClearPort();
-//     if(SyncWrite(initpacket, 0x1E, initparams, 100, 4) != 108){
-//         printf("Failed init to pose! \n");
-//         return false;
-//     }
-
-//     usleep(2000);
-        
-//     // Red means stop
-//     int color = MakeColor(255, 0, 0);
-//     unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
-
-//     MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
-//     port.ClearPort();
-//     port.WritePort(initpacket, 9);
-//     sleep(2);
-    
-//     // Green means go
-//     color = MakeColor(0, 255, 0); 
-//     initpacket[6] = GetLowByte(color);
-//     initpacket[7] = GetHighByte(color);
-//     initpacket[8] = CalculateChecksum(initpacket);
-//     port.ClearPort();
-//     port.WritePort(initpacket, 9);
-//     usleep(2000);   
-  
-//     return true;
-// }
 
 //InitToPose - gently moves Darwin into a ready position
 bool DarwinController::InitToPose(){
@@ -185,7 +124,10 @@ bool DarwinController::InitToPose(){
     }
     unsigned char paramlength = 1;
     unsigned char initnumparams = 40;
-    SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
+    int result = SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
+    printf("syncwrite result1: %d\n", result);
+    getchar();
+
     port.ClearPort();
     if(port.WritePort(initpacket, 48) != 48){
         printf("Failed init to pose! Failed Torque Enable!\n");
@@ -399,7 +341,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             if(fail_counter >= 5){
                 if(txpacket[INSTRUCTION] == PING){ 
                     //failed reading 5 times. return.
-                    //printf("failed ping\n");
+                    printf("failed ping\n");
                 }
                 return -1;
            }
@@ -429,9 +371,9 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             }  else { //check time out status
                 if(isTimeOut(packetStartTime, packetWaitTime)){
                     if(get_length == 0){
-                        //printf("timed out\n");
+                        printf("timed out\n");
                     } else {
-                        //printf("rxpacket corrupt\n");
+                        printf("rxpacket corrupt\n");
                     }
                     if(txpacket[INSTRUCTION] != BULK_READ){
                         fail_counter++;
@@ -487,7 +429,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     get_length = to_length;
                     num--;
                 } else {
-                    //printf("rx corrupt\n");
+                    printf("rx corrupt\n");
                     for(int j = 0; j <= get_length - 2; j++){
                         rxpacket[j] = rxpacket[j+2];
                     }
@@ -498,7 +440,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
-                        //printf("rx corrupt\n");
+                        printf("rx corrupt\n");
                     }
                     break;
                 }
