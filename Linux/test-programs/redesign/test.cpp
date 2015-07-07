@@ -22,17 +22,22 @@ int main(int argc, char** argv){
 
 	usleep(5000);
 
-	printf("~~~ Testing MakeBulkPacket ~~~\n");
+	printf("\n~~~ Testing MakeBulkPacket ~~~\n");
     darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
 
-    printf("~~~ Testing Read ~~~\n");
+
+	printf("\n~~~ Testing InitToPose ~~~\n");
+	darCon->InitToPose();
+
+
+    printf("\n~~~ Testing Read ~~~\n");
 	unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 	unsigned char txpacketread[] = {0, 0, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
 
 	darCon->FinishPacket(txpacketread);
 
     int result = darCon->ReadWrite(txpacketread, rxpacket);
-    int word;
+    int word = 0;
 
 	if(result == 0){
 		printf("Failed read! \n");
@@ -51,6 +56,10 @@ int main(int argc, char** argv){
 	while(result == 0){
 		//usleep(5000);
 		result = darCon->ReadWrite(txpacketread, rxpacket);
+	}
+
+	if(word == 0){
+		word = darCon->MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
 	}
 	
 	word += 200;
@@ -78,7 +87,8 @@ int main(int argc, char** argv){
 
 	printf("result3: %d\n", result3);
 
-
+	printf("Press ENTER to continue testing.\n");
+	getchar();
 
 
     
