@@ -294,7 +294,12 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
 
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
-    int length = txpacket[LENGTH] + 4;
+    if(txpacket[INSTRUCTION] == SYNC_WRITE){
+        int length = txpacket[LENGTH] + 8;
+    } else {
+        int length = txpacket[LENGTH] + 4;
+    }
+
     port.ClearPort();
 
     int to_length = 0;
@@ -479,8 +484,9 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
     
     printf("In syncwrite len: %d\n", len);
-    //return ReadWrite(packet, rxpacket);
-    return port.WritePort(packet, len);
+    
+    return ReadWrite(packet, rxpacket);
+    //return port.WritePort(packet, len+1);
 
 }
 
