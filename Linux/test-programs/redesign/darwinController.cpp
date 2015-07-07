@@ -55,11 +55,16 @@ int BulkReadData::MakeWord(int lowbyte, int highbyte){
 
 
 DarwinController::DarwinController(){
-	// what to do here?
+     // create bulk read data structure
+    for(int i = 0; i < 254; i++){
+        BulkData[i] = BulkReadData();
+    }
+
 }
 
 DarwinController::~DarwinController(){
-	//what to do here?
+	delete port;
+    delete BulkRead;
 }
 
 bool DarwinController::PowerDXL(){
@@ -142,6 +147,53 @@ int DarwinController::GetHighByte(int word){
     temp = word & 0xff00;
     return (int)(temp >> 8);
 }
+
+void DarwinController::MakeBulkPacket(unsigned char *BulkReadTxPacket){
+
+    int number = 0;
+
+    BulkReadTxPacket[0] = 0xFF;
+    BulkReadTxPacket[1] = 0xFF;
+    BulkReadTxPacket[ID] = 0xFE;
+    BulkReadTxPacket[INSTRUCTION] = 0x92;
+    BulkReadTxPacket[PARAMETER] = 0x0;
+    
+    if(Ping(0xC8, 0)){
+        BulkReadTxPacket[PARAMETER+3*number+1] = 30; //length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0xC8; // ID_CM
+        BulkReadTxPacket[PARAMETER+3*number+3] = 24; //P_DXL_POWER
+        number++;
+    }
+
+    if(Ping(70, 0)){
+        BulkReadTxPacket[PARAMETER+3*number+1] = 10;    // length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x70;  // ID_L_FSR
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;  // start address P_FSR1_L
+        number++;
+    }
+
+    if(Ping(0x6F, 0)){
+        BulkReadTxPacket[PARAMETER+3*number+1] = 10;     // length
+        BulkReadTxPacket[PARAMETER+3*number+2] = 0x6F;   // id ID_R_FSR
+        BulkReadTxPacket[PARAMETER+3*number+3] = 0x1A;   // start address P_FSR1_L
+        number++;
+    }
+    
+    for(int id = 1; id < 20; id++){ //NUMBER OF JOINTS = 20
+       
+       BulkReadTxPacket[PARAMETER+3*number+1] = 23;  // length
+       BulkReadTxPacket[PARAMETER+3*number+2] = id; // id
+       BulkReadTxPacket[PARAMETER+3*number+3] = 26;  // start at CCW_COMPLIANCE_MARGIN
+       number++;
+        
+    }
+
+    BulkReadTxPacket[LENGTH]          = (number * 3) + 3;  
+
+    int length = BulkReadTxPacket[LENGTH] + 4;
+    BulkReadTxPacket[length - 1] = CalculateChecksum(BulkReadTxPacket);
+}
+
 
 
 /*********************************************************
@@ -362,7 +414,6 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
 // return value???
 int DarwinController::WriteByte(int id, int address, int value){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
-    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 
     txpacket[ID]           = (unsigned char)id;
     txpacket[INSTRUCTION]  = WRITE;
@@ -371,12 +422,10 @@ int DarwinController::WriteByte(int id, int address, int value){
     txpacket[LENGTH]       = 4;
 
     int txlength = txpacket[LENGTH] + 4;
-    // port->ClearPort();
-    // int result = port->WritePort(txpacket, txlength);
-
     FinishPacket(txpacket);
 
-    int result = ReadWrite(txpacket, rxpacket);
+    port->ClearPort();
+    int result = port->WritePort(txpacket, txlength);
 
     if(result == txlength){ // do we want to return bool???
         return result;
@@ -391,7 +440,6 @@ int DarwinController::WriteByte(int id, int address, int value){
 // where value will be split into high and low bytes in function
 int DarwinController::WriteWord(int id, int address, int value){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
-    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 
     txpacket[ID]           = (unsigned char)id;
     txpacket[INSTRUCTION]  = WRITE;
@@ -401,12 +449,10 @@ int DarwinController::WriteWord(int id, int address, int value){
     txpacket[LENGTH]       = 5;
 
     int txlength = txpacket[LENGTH] + 4;
-    // port->ClearPort();
-    // int result = port->WritePort(txpacket, txlength);
-    
-    //makePacket(txpacket);
+    FinishPacket(txpacket);
 
-    int result = ReadWrite(txpacket, rxpacket);
+    port->ClearPort();
+    int result = port->WritePort(txpacket, txlength);
 
     if(result == txlength){ // do we want to return bool???
         return result;
@@ -475,7 +521,27 @@ int DarwinController::MakeWord(int lowbyte, int highbyte){
     return (int)word;
 }
 
+bool DarwinController::Ping(int id, int *error){
+    unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
+    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 
+
+    txpacket[ID]           = (unsigned char)id;
+    txpacket[INSTRUCTION]  = 1;
+    txpacket[LENGTH]       = 2;
+    
+    // int length = txpacket[LENGTH] + 4;
+    // txpacket[length-1] = CalculateChecksum(txpacket);
+
+    FinishPacket(txpacket);
+
+    int result = ReadWrite(txpacket, rxpacket);
+    if( result == 0){
+        return false;
+    } else {
+        return true;
+    }
+}
 
 /******************************************************
  * Converts 255 value rgb values into a 2 byte color  *

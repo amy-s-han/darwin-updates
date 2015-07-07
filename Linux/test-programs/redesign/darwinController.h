@@ -25,7 +25,9 @@ class DarwinController {
 
 	public: 
 		Port *port;
+        BulkReadData *BulkRead;
 		BulkReadData BulkData[ID_BROADCAST]; //254
+        unsigned char BulkReadTxPacket[266];
 
 		DarwinController();
 		~DarwinController();
@@ -34,13 +36,13 @@ class DarwinController {
 		bool Initialize(const char* name);
         void ClosePort();
 
-
-
         unsigned char CalculateChecksum(unsigned char *packet);
         double getCurrentTime();
         bool isTimeOut(double packetStartTime, double packetWaitTime);
         int GetLowByte(int word);
         int GetHighByte(int word);
+
+        void MakeBulkPacket(unsigned char *BulkReadTxPacket);
 
         void MakePacket(unsigned char* packet, unsigned char motor_ID, unsigned char parambytes, unsigned char instruction, unsigned char address, unsigned char* params);
         void FinishPacket(unsigned char *txpacket);
@@ -55,10 +57,10 @@ class DarwinController {
         int ReadWord(int id, int address, int *word);
 
         int MakeWord(int lowbyte, int highbyte);
+        bool Ping(int id, int *error);
         int MakeColor(int red, int green, int blue);
 
         int SetJointAngle(unsigned char joint_ID, int goal_angle);
-
         int SetMoveSpeed(unsigned char joint_ID, int move_speed);
         int Set_P_Gain(unsigned char joint_ID, unsigned char P_Value);
         int Set_I_Gain(unsigned char joint_ID, unsigned char I_Value);
