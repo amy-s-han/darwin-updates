@@ -66,7 +66,7 @@ DarwinController::DarwinController(){
 }
 
 DarwinController::~DarwinController(){
-	delete port;
+	
 }
 
 bool DarwinController::PowerDXL(){
@@ -74,6 +74,9 @@ bool DarwinController::PowerDXL(){
     dxltxpacket[7] = CalculateChecksum(dxltxpacket);
     int result = port->WritePort(dxltxpacket, 8); // Robotis uses writebyte
     //robotis also has a sleep for 300msec.
+    
+    usleep(500000);
+
     if(result != 0){
         return true;
     } else {
@@ -82,7 +85,7 @@ bool DarwinController::PowerDXL(){
 }
 
 bool DarwinController::Initialize(const char* name){
-	port = new Port(name);
+	port = Port(name);
 	if(port->OpenPort() == false){
 		fprintf(stderr, "\n Fail to open port\n");
         fprintf(stderr, " CM-730 is used by another program or does not have root privileges.\n\n");

@@ -13,26 +13,23 @@
 
 int main(int argc, char** argv){
    
-	DarwinController* darCon = new DarwinController();
+	DarwinController* darCon = DarwinController();
 
 	if(darCon->Initialize("/dev/ttyUSB0") == false){
 		fprintf(stderr, "Failed to initialize\n");
 		return 0;
 	}
 
-	usleep(5000);
 
 	printf("\n~~~ Testing MakeBulkPacket ~~~\n");
     darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
 
-    /*
-	printf("\n~~~ Testing InitToPose ~~~\n");
-	darCon->InitToPose();
+    
+	// printf("\n~~~ Testing InitToPose ~~~\n");
+	// darCon->InitToPose();
 
-	*/
-
-	printf("Press ENTER to continue testing.\n");
-	getchar();
+	// printf("Press ENTER to continue testing.\n");
+	// getchar();
 	
 
     printf("\n~~~ Testing Read ~~~\n");
@@ -59,7 +56,6 @@ int main(int argc, char** argv){
 
 	
 	while(result == 0){
-		//usleep(5000);
 		result = darCon->ReadWrite(txpacketread, rxpacket);
 	}
 
@@ -101,6 +97,5 @@ int main(int argc, char** argv){
 
 	darCon->ClosePort();
 
-	delete(darCon);
 
 }

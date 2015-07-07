@@ -22,7 +22,7 @@ Port::Port(const char* name){
 }
 
 Port::~Port(){
-    //ClosePort(); // close port???
+    
 }
 
 bool Port::OpenPort()
