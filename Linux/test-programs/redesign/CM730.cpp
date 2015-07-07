@@ -1,4 +1,4 @@
-
+// CM730.cpp -
 
 #include <unistd.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ Port::Port(const char* name){
 }
 
 Port::~Port(){
-    ClosePort();
+    //ClosePort(); // close port???
 }
 
 bool Port::OpenPort()

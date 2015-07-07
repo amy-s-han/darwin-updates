@@ -36,6 +36,8 @@ class DarwinController {
 		bool Initialize(const char* name);
         void ClosePort();
 
+        bool InitToPose();
+
         unsigned char CalculateChecksum(unsigned char *packet);
         double getCurrentTime();
         bool isTimeOut(double packetStartTime, double packetWaitTime);
@@ -48,7 +50,7 @@ class DarwinController {
         void FinishPacket(unsigned char *txpacket);
         
         int ReadWrite(unsigned char *txpacket, unsigned char *rxpacket);
-        int SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength, Port* port);
+        int SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength);
         int BulkRead(unsigned char *rxpacket);
 
         int WriteByte(int id, int address, int value);

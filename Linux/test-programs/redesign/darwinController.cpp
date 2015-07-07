@@ -1,5 +1,8 @@
+// darwinController.cpp - contains a library of useful functions
+// that allow the user to control Darwin-OP
 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include "darwinController.h"
@@ -104,6 +107,64 @@ void DarwinController::ClosePort(){
     port->ClosePort();
 }
 
+//InitToPose - gently moves Darwin into a ready position
+bool DarwinController::InitToPose(){
+
+    unsigned char initpacket[108] = {0, };
+    unsigned char initparams[100] = {0, };
+
+    // Torque enable
+    for(int IDnum = 0; IDnum < 21; IDnum++){
+       initparams[2*IDnum] = (unsigned char)(IDnum+1); // +1 because motors start at 1
+       initparams[2*IDnum+1] = 0x01;
+    }
+    unsigned char paramlength = 1;
+    unsigned char initnumparams = 40;
+    SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
+    port->ClearPort();
+    if(port->WritePort(initpacket, 48) != 48){
+        printf("Failed init to pose! Failed Torque Enable!\n");
+        return false;
+    }
+
+    usleep(2000);
+
+    // Starting position and speed
+    for(int z = 0; z < 20; z++){
+        initparams[5*z] = z+1;
+        initparams[5*z+1] = 0x00;
+        initparams[5*z+2] = 0x08;
+        initparams[5*z+3] = 0x40;
+        initparams[5*z+4] = 0x00;
+    }
+    SyncWrite(initpacket, 0x1E, initparams, 100, 4);
+    usleep(2000);
+    port->ClearPort();
+    if(port->WritePort(initpacket, 108) != 108){
+        printf("Failed init to pose! \n");
+        return false;
+    }
+        
+    // Red means stop
+    int color = MakeColor(255, 0, 0);
+    unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
+
+    MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
+    port->ClearPort();
+    port->WritePort(initpacket, 9);
+    sleep(2);
+    
+    // Green means go
+    color = MakeColor(0, 255, 0); 
+    initpacket[6] = GetLowByte(color);
+    initpacket[7] = GetHighByte(color);
+    initpacket[8] = CalculateChecksum(initpacket);
+    port->ClearPort();
+    port->WritePort(initpacket, 9);
+    usleep(2000);   
+  
+    return true;
+}
 
 unsigned char DarwinController::CalculateChecksum(unsigned char *packet)
 {
@@ -340,11 +401,11 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-                printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+                //printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+                        //printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
                     }
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
@@ -357,7 +418,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     get_length = to_length;
                     num--;
                 } else {
-                    printf("rx corrupt\n");
+                    //printf("rx corrupt\n");
                     for(int j = 0; j <= get_length - 2; j++){
                         rxpacket[j] = rxpacket[j+2];
                     }
@@ -368,7 +429,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
-                        printf("rx corrupt\n");
+                        //printf("rx corrupt\n");
                     }
                     break;
                 }
@@ -391,7 +452,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
  * There can be any amount of motors and in any order *
  * Note that paramlength does not include the ID      *
  ******************************************************/
-int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength, Port* port){
+int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength){
    
     unsigned char len = numparams + 7; //Last index of array (where checksum goes) 
     packet[0] = 0xFF;    // Heading
