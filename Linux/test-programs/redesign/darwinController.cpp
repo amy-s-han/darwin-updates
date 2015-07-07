@@ -64,7 +64,6 @@ DarwinController::DarwinController(){
 
 DarwinController::~DarwinController(){
 	delete port;
-    delete BulkRead;
 }
 
 bool DarwinController::PowerDXL(){
@@ -409,6 +408,10 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
     return ReadWrite(packet, rxpacket);
+}
+
+int DarwinController::BulkRead(unsigned char *rxpacket){
+    return ReadWrite(BulkReadTxPacket, rxpacket);
 }
 
 // return value???

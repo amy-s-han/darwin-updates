@@ -42,7 +42,10 @@ int main(int argc, char** argv){
 
 	}
 
-	printf("~~~ Testing Write ~~~\n");
+	printf("Press ENTER to continue testing.\n");
+	getchar();
+
+	printf("\n~~~ Testing Write ~~~\n");
 
 	
 	while(result == 0){
@@ -54,14 +57,29 @@ int main(int argc, char** argv){
     int value_low = darCon->GetLowByte(word);
     int value_high = darCon->GetHighByte(word);
 
-	unsigned char txpacketwrite[] = {0, 0, 0x05, 0x05, 0x03, 0x1E, 0, 0, 0};
+	unsigned char txpacketwrite[] = {0, 0, 0x14, 0x05, 0x03, 0x1E, 0, 0, 0};
 	txpacketwrite[PARAMETER+1] = value_low;
 	txpacketwrite[PARAMETER+2] = value_high;
 
 	darCon->FinishPacket(txpacketwrite);
 
 	int result2 = darCon->ReadWrite(txpacketwrite, rxpacket);
-	printf("result2: %d\n", result2);
+	if(result2 == 0){
+		printf("failed write!\n");
+	} else {
+		printf("Successful write. result2: %d\n", result2);
+	}
+
+	printf("Press ENTER to continue testing.\n");
+	getchar();
+
+	printf("\n~~~ Testing BulkRead ~~~\n");
+	int result3 = darCon->BulkRead(rxpacket);
+
+	printf("result3: %d\n", result3);
+
+
+
 
     
 	printf("Press ENTER to close port\n");

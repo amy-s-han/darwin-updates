@@ -25,7 +25,7 @@ class DarwinController {
 
 	public: 
 		Port *port;
-        BulkReadData *BulkRead;
+        
 		BulkReadData BulkData[ID_BROADCAST]; //254
         unsigned char BulkReadTxPacket[266];
 
@@ -49,6 +49,7 @@ class DarwinController {
         
         int ReadWrite(unsigned char *txpacket, unsigned char *rxpacket);
         int SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength, Port* port);
+        int BulkRead(unsigned char *rxpacket);
 
         int WriteByte(int id, int address, int value);
         int WriteWord(int id, int address, int value);
