@@ -160,13 +160,13 @@ class Port {
 	
 	private:
 		int m_Socket_fd;
-		char m_PortName[20]; 
+		//char m_PortName[20]; 
 		double m_ByteTransferTime;		
 
 	public:
-		Port(const char* name);
+		Port();
 		~Port();
-		bool OpenPort();
+		bool OpenPort(const char* name);
 		void ClosePort();
 		void ClearPort();
 		int WritePort(unsigned char* packet, int numPacket);

@@ -72,9 +72,9 @@ DarwinController::~DarwinController(){
 bool DarwinController::PowerDXL(){
     unsigned char dxltxpacket[] = {0xFF, 0xFF, ID_CM, 0x04, WRITE, DXL_POWER, 0x01, 0};
     dxltxpacket[7] = CalculateChecksum(dxltxpacket);
-    int result = port->WritePort(dxltxpacket, 8); // Robotis uses writebyte
+    int result = port.WritePort(dxltxpacket, 8); // Robotis uses writebyte
     //robotis also has a sleep for 300msec.
-    
+
     usleep(500000);
 
     if(result != 0){
@@ -85,8 +85,8 @@ bool DarwinController::PowerDXL(){
 }
 
 bool DarwinController::Initialize(const char* name){
-	port = Port(name);
-	if(port->OpenPort() == false){
+	//port = Port(name); // for now.
+	if(port.OpenPort(name) == false){
 		fprintf(stderr, "\n Fail to open port\n");
         fprintf(stderr, " CM-730 is used by another program or does not have root privileges.\n\n");
         return false;
@@ -107,7 +107,7 @@ bool DarwinController::Initialize(const char* name){
 }
 
 void DarwinController::ClosePort(){
-    port->ClosePort();
+    port.ClosePort();
 }
 
 //InitToPose - gently moves Darwin into a ready position
@@ -123,9 +123,8 @@ bool DarwinController::InitToPose(){
     }
     unsigned char paramlength = 1;
     unsigned char initnumparams = 40;
-    SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
-    port->ClearPort();
-    if(port->WritePort(initpacket, 48) != 48){
+    
+    if(SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength) != 48){
         printf("Failed init to pose! Failed Torque Enable!\n");
         return false;
     }
@@ -140,21 +139,23 @@ bool DarwinController::InitToPose(){
         initparams[5*z+3] = 0x40;
         initparams[5*z+4] = 0x00;
     }
-    SyncWrite(initpacket, 0x1E, initparams, 100, 4);
-    usleep(2000);
-    port->ClearPort();
-    if(port->WritePort(initpacket, 108) != 108){
+   
+    
+    port.ClearPort();
+    if(SyncWrite(initpacket, 0x1E, initparams, 100, 4) != 108){
         printf("Failed init to pose! \n");
         return false;
     }
+
+    usleep(2000);
         
     // Red means stop
     int color = MakeColor(255, 0, 0);
     unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
 
     MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
-    port->ClearPort();
-    port->WritePort(initpacket, 9);
+    port.ClearPort();
+    port.WritePort(initpacket, 9);
     sleep(2);
     
     // Green means go
@@ -162,8 +163,8 @@ bool DarwinController::InitToPose(){
     initpacket[6] = GetLowByte(color);
     initpacket[7] = GetHighByte(color);
     initpacket[8] = CalculateChecksum(initpacket);
-    port->ClearPort();
-    port->WritePort(initpacket, 9);
+    port.ClearPort();
+    port.WritePort(initpacket, 9);
     usleep(2000);   
   
     return true;
@@ -287,16 +288,16 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
     txpacket[length - 1] = CalculateChecksum(txpacket);
 }
 
-//general read/write:
+// if unsuccessful, return 0 or -1. Returns >= 1 for success.
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
     int length = txpacket[LENGTH] + 4;
-    port->ClearPort();
+    port.ClearPort();
 
     int to_length = 0;
     int num = 0; 
 
-    if(port->WritePort(txpacket, length) == length){ //write to port
+    if(port.WritePort(txpacket, length) == length){ //write to port
 
         if(txpacket[INSTRUCTION] == BULK_READ){ //set bulk read vars
 
@@ -337,12 +338,12 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             if(fail_counter >= 5){
                 if(txpacket[INSTRUCTION] == PING){ 
                     //failed reading 5 times. return.
-                    printf("failed ping\n");
+                    //printf("failed ping\n");
                 }
-                return 0;
+                return -1;
            }
 
-            length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+            length = port.ReadPort(&rxpacket[get_length], to_length - get_length);
 
             get_length += length;
 
@@ -362,21 +363,21 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 }
                 // didn't get packet, write out to port again
                 get_length = 0;
-                port->ClearPort();
-                port->WritePort(txpacket, length);
+                port.ClearPort();
+                port.WritePort(txpacket, length);
             }  else { //check time out status
                 if(isTimeOut(packetStartTime, packetWaitTime)){
                     if(get_length == 0){
-                        printf("timed out\n");
+                        //printf("timed out\n");
                     } else {
-                        printf("rxpacket corrupt\n");
+                        //printf("rxpacket corrupt\n");
                     }
                     if(txpacket[INSTRUCTION] != BULK_READ){
                         fail_counter++;
                         get_length = 0;
                         packetStartTime = getCurrentTime();
-                        port->ClearPort();
-                        port->WritePort(txpacket, length);
+                        port.ClearPort();
+                        port.WritePort(txpacket, length);
                     }
                 }       
             }
@@ -495,8 +496,8 @@ int DarwinController::WriteByte(int id, int address, int value){
     int txlength = txpacket[LENGTH] + 4;
     FinishPacket(txpacket);
 
-    port->ClearPort();
-    int result = port->WritePort(txpacket, txlength);
+    port.ClearPort();
+    int result = port.WritePort(txpacket, txlength);
 
     if(result == txlength){ // do we want to return bool???
         return result;
@@ -522,8 +523,8 @@ int DarwinController::WriteWord(int id, int address, int value){
     int txlength = txpacket[LENGTH] + 4;
     FinishPacket(txpacket);
 
-    port->ClearPort();
-    int result = port->WritePort(txpacket, txlength);
+    port.ClearPort();
+    int result = port.WritePort(txpacket, txlength);
 
     if(result == txlength){ // do we want to return bool???
         return result;

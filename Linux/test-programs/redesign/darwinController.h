@@ -24,7 +24,7 @@ class DarwinController {
 	private:
 
 	public: 
-		Port *port;
+		Port port;
         
 		BulkReadData BulkData[ID_BROADCAST]; //254
         unsigned char BulkReadTxPacket[266];

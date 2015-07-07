@@ -13,19 +13,19 @@
 #include "CM730.h"
 
 
-Port::Port(const char* name){
+Port::Port(){
 
-    strcpy(m_PortName, name);
+    //strcpy(m_PortName, name);
     m_Socket_fd = -1;
     m_ByteTransferTime = 0;
 
 }
 
 Port::~Port(){
-    
+
 }
 
-bool Port::OpenPort()
+bool Port::OpenPort(const char* name)
 {
 
 	struct termios newtio;
@@ -34,7 +34,7 @@ bool Port::OpenPort()
     
     ClosePort();
 
-    if((m_Socket_fd = open(m_PortName, O_RDWR|O_NOCTTY|O_NONBLOCK)) < 0){
+    if((m_Socket_fd = open(name, O_RDWR|O_NOCTTY|O_NONBLOCK)) < 0){
         printf("failed!/n");
         ClosePort();
         return false;

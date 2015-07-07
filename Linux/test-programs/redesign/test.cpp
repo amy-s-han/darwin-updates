@@ -13,7 +13,7 @@
 
 int main(int argc, char** argv){
    
-	DarwinController* darCon = DarwinController();
+	DarwinController* darCon = new DarwinController();
 
 	if(darCon->Initialize("/dev/ttyUSB0") == false){
 		fprintf(stderr, "Failed to initialize\n");
@@ -25,11 +25,11 @@ int main(int argc, char** argv){
     darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
 
     
-	// printf("\n~~~ Testing InitToPose ~~~\n");
-	// darCon->InitToPose();
+	printf("\n~~~ Testing InitToPose ~~~\n");
+	darCon->InitToPose();
 
-	// printf("Press ENTER to continue testing.\n");
-	// getchar();
+	printf("Press ENTER to continue testing.\n");
+	getchar();
 	
 
     printf("\n~~~ Testing Read ~~~\n");
