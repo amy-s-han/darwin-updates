@@ -291,7 +291,7 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
     txpacket[length - 1] = CalculateChecksum(txpacket);
 }
 
-// if unsuccessful, return 0 or -1. Returns >= 1 for success.
+
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
     int length = txpacket[LENGTH] + 4;
@@ -343,7 +343,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     //failed reading 5 times. return.
                     printf("failed ping\n");
                 }
-                return -1;
+                return 0;
            }
 
             length = port.ReadPort(&rxpacket[get_length], to_length - get_length);
@@ -479,7 +479,12 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
     packet[len] = CalculateChecksum(packet);
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
-    return ReadWrite(packet, rxpacket);
+    //return ReadWrite(packet, rxpacket);
+    printf("len: %d\n", len);
+    getchar();
+
+    return port.WritePort(packet, len);
+
 }
 
 int DarwinController::BulkRead(unsigned char *rxpacket){
