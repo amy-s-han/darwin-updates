@@ -102,12 +102,5 @@ void foo() {
     SyncWrite(txpacket, 0x03, buf, numparams, lenparam);
     port->ClearPort();
     port->WritePort(txpacket, numparams + 8);
-
-
-	// todo: fill in checksum
-
-	// todo: send buf
-
-
 }
 
