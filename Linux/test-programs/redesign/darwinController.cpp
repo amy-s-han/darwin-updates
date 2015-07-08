@@ -117,6 +117,14 @@ bool DarwinController::InitToPose(){
     unsigned char initpacket[108] = {0, };
     unsigned char initparams[100] = {0, };
 
+    // Red means stop
+    int color = MakeColor(255, 0, 0);
+    unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
+
+    MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
+    port.ClearPort();
+    port.WritePort(initpacket, 9);
+
     // Torque enable
     for(int IDnum = 0; IDnum < 21; IDnum++){
        initparams[2*IDnum] = (unsigned char)(IDnum+1); // +1 because motors start at 1
@@ -126,13 +134,14 @@ bool DarwinController::InitToPose(){
     unsigned char initnumparams = 40;
     int result = SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
     printf("syncwrite result1: %d\n", result);
-    getchar();
 
+    /*
     port.ClearPort();
     if(port.WritePort(initpacket, 48) != 48){
         printf("Failed init to pose! Failed Torque Enable!\n");
         return false;
     }
+    */
 
     usleep(2000);
 
@@ -144,31 +153,29 @@ bool DarwinController::InitToPose(){
         initparams[5*z+3] = 0x40;
         initparams[5*z+4] = 0x00;
     }
-    SyncWrite(initpacket, 0x1E, initparams, 100, 4);
-    usleep(2000);
+    result = SyncWrite(initpacket, 0x1E, initparams, 100, 4);
+    printf("syncwrite result2: %d\n", result);
+
+    /*
     port.ClearPort();
     if(port.WritePort(initpacket, 108) != 108){
         printf("Failed init to pose! \n");
         return false;
     }
+    */
         
-    // Red means stop
-    int color = MakeColor(255, 0, 0);
-    unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
-
-    MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
-    port.ClearPort();
-    port.WritePort(initpacket, 9);
-    sleep(2);
-    
+    sleep(1);
     // Green means go
     color = MakeColor(0, 255, 0); 
     initpacket[6] = GetLowByte(color);
     initpacket[7] = GetHighByte(color);
-    initpacket[8] = CalculateChecksum(initpacket);
+
+    colorparams[0] = GetLowByte(color);
+    colorparams[1] = GetHighByte(color);
+    MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
+
     port.ClearPort();
     port.WritePort(initpacket, 9);
-    usleep(2000);   
   
     return true;
 }
@@ -296,18 +303,15 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
     int length = 0;
 
-    if(txpacket[INSTRUCTION] == SYNC_WRITE){
-        length = txpacket[LENGTH] + 8;
-    } else {
-        length = txpacket[LENGTH] + 4;
-    }
-
+    length = txpacket[LENGTH] + 4;
+    
     port.ClearPort();
 
     int to_length = 0;
     int num = 0; 
 
     if(port.WritePort(txpacket, length) == length){ //write to port
+      printf("in readwrite length: %d\n", length);
 
         if(txpacket[INSTRUCTION] == BULK_READ){ //set bulk read vars
 
