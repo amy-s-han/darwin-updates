@@ -19,19 +19,19 @@ using namespace std;
 #define motor_LED (0)
 #define REGWRITE (0)
 
-
 struct JointData {
-	uint8_t  flags;
-	uint16_t goal;
-	uint8_t p, i, d;
+    uint8_t  flags;
+    uint16_t goal;
+    uint8_t p, i, d;
 };
 
 enum {
-	NUM_JOINTS = 20,
-	FLAG_GOAL_CHANGED = 0x01,
-	FLAG_GAINS_CHANGED = 0x02,
-	FLAG_ENABLE = 0x80,
+    FLAG_GOAL_CHANGED = 0x01,
+    FLAG_GAINS_CHANGED = 0x02,
+    FLAG_ENABLE = 0x80,
+    NUM_JOINTS = 20
 };
+
 
 unsigned char CalculateChecksum(unsigned char *packet)
 {

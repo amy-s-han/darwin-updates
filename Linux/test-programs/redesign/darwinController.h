@@ -1,6 +1,8 @@
 #ifndef _DARWINCONTROLLER_H_
 #define _DARWINCONTROLLER_H_
 
+#include <stdint.h>
+
 
 #include "CM730.h"
 
@@ -26,6 +28,18 @@ class DarwinController {
 	public: 
 		Port port;
         
+        struct JointData {
+            uint8_t  flags;
+            uint16_t goal;
+            uint8_t p, i, d;
+        };
+
+        enum {
+            FLAG_GOAL_CHANGED = 0x01,
+            FLAG_GAINS_CHANGED = 0x02,
+            FLAG_ENABLE = 0x80,
+        };
+
 		BulkReadData BulkData[ID_BROADCAST]; //254
         unsigned char BulkReadTxPacket[266];
 
@@ -71,15 +85,15 @@ class DarwinController {
         int Set_PID_Gain(unsigned char joint_ID, unsigned char P_Value, unsigned char I_Value, unsigned char D_Value);
         int Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled);
 
-        void DarwinController::Set_Enables(JointData* joints, uint8_t* data);
-        int DarwinController::Set_P_Data(JointData* joints, uint8_t* data);
-        int DarwinController::Set_I_Data(JointData* joints, uint8_t* data);
-        int DarwinController::Set_D_Data(JointData* joints, uint8_t* data);
+        void Set_Enables(JointData* joints, uint8_t* data);
+        int Set_P_Data(JointData* joints, uint8_t* data);
+        int Set_I_Data(JointData* joints, uint8_t* data);
+        int Set_D_Data(JointData* joints, uint8_t* data);
 
-        int DarwinController::Set_Pos_Data(JointData* joints, uint16_t* data);
-        void DarwinController::Update_Motors(Port* port, JointData* joints);
-        
-        void DarwinController::foo(Port* port, JointData* joints);
+        int Set_Pos_Data(JointData* joints, uint16_t* data);
+        void Update_Motors(Port* port, JointData* joints);
+
+        void foo(Port* port, JointData* joints);
 
 
 
