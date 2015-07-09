@@ -325,7 +325,7 @@ void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data){
         ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
     else
         ji.flags |= FLAG_ENABLE;
-    }
+ 
 }
 
 void Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
@@ -348,8 +348,8 @@ void Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
 }
 
 int Set_Pos_Data(JointData* joints, unsigned char motor_ID, uint16_t data){
-    JointData& ji = joints[motor_ID-1];
-    ji.goal = data[i-1];
+    JointData& ji = joints[motor_ID];
+    ji.goal = data;
     ji.flags |= FLAG_GOAL_CHANGED;
 }
 
@@ -467,12 +467,12 @@ void foo(Port* port, JointData* joints) {
     uint16_t goalpos[20] = {2048, };
 
     enables[4] = 1;
+    enables[18] = 1;
     enables[19] = 1;
-    enables[20] = 1;
 
     goalpos[4] = 2048 - 200;
+    goalpos[18] = 2048 - 200;
     goalpos[19] = 2048 - 200;
-    goalpos[20] = 2048 - 200;
 
     Set_Enables(joints, enables);
     int poscount = Set_Pos_Data(joints, goalpos);
@@ -481,7 +481,7 @@ void foo(Port* port, JointData* joints) {
 //    Set_D_Data(joints, dgains);
 
     Update_Motors(port, joints);
-
+    getchar();
     Set_Pos_Data(joints, 5, 2048 + 200);
     Update_Motors(port, joints);
 }
