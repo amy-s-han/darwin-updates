@@ -253,10 +253,12 @@ int Init_to_Pose(Port* port){
 */
 }  
 
+// These take in a 20 long array
+// Indexing is off by one, so the data for the nth joint is in the (n-1)th index
 void Set_Enables(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if(data[i] == 0)
+	if(data[i-1] == 0)
         ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
 	else
 	    ji.flags |= FLAG_ENABLE;
@@ -268,7 +270,7 @@ int Set_P_Data(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
 	if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
-	    ji.p = data[i];
+	    ji.p = data[i-1];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -281,7 +283,7 @@ int Set_I_Data(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
 	if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
-	    ji.i = data[i];
+	    ji.i = data[i-1];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -293,8 +295,8 @@ int Set_D_Data(JointData* joints, uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if((ji.flags & FLAG_ENABLE) && (ji.d != data[i])){
-	    ji.d = data[i];
+	if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
+	    ji.d = data[i-1];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -306,13 +308,42 @@ int Set_Pos_Data(JointData* joints, uint16_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i])){
-	    ji.goal = data[i];
-	    ji.flags |= FLAG_GOAL_CHANGED;
-            counter ++;
-   	}
+	   if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
+	       ji.goal = data[i-1];
+	       ji.flags |= FLAG_GOAL_CHANGED;
+           counter ++;
+   	    }
     }
     return counter;
+}
+
+// These only change data for one joint
+// and there isn't any indexing trickery 
+void Set_Enables(JointData joint, uint8_t data){
+    if(data == 0)
+        joint.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
+    else
+        joint.flags |= FLAG_ENABLE;
+}
+
+void Set_P_Data(JointData joint, uint8_t data){
+    joint.p = data;
+    joint.flags |= FLAG_GAINS_CHANGED;
+}
+
+void Set_I_Data(JointData joint, uint8_t data){
+    joint.i = data;
+    joint.flags |= FLAG_GAINS_CHANGED;
+}
+
+void Set_D_Data(JointData joint, uint8_t data){
+    joint.d = data;
+    joint.flags |= FLAG_GAINS_CHANGED;
+}
+
+void Set_Pos_Data(JointData joint, uint16_t data){
+    joint.goal = data;
+    joint.flags |= FLAG_GOAL_CHANGED;
 }
 
 void Update_Motors(Port* port, JointData* joints){
@@ -324,10 +355,10 @@ void Update_Motors(Port* port, JointData* joints){
         const JointData& ji = joints[i];
 	bool enabled = ji.flags & FLAG_ENABLE; // pick off top bit to see if joint enabled
 	uint8_t changed = ji.flags & ~FLAG_ENABLE; // pick off bottom 7 bits
-	if (enabled && changed) { // if this motor is enabled and has new data
-	    change_flags |= changed; // add in changes from this motor to set of all changes
-	    packet_count += 1; // increment number of packets to send
-	}
+	   if (enabled && changed) { // if this motor is enabled and has new data
+	       change_flags |= changed; // add in changes from this motor to set of all changes
+	       packet_count += 1; // increment number of packets to send
+	   }
     }
 
     printf("packet count is: %d\n", packet_count);
