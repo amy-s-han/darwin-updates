@@ -380,7 +380,7 @@ void Update_Motors(Port* port, JointData* joints){
 
        printf("Got to checkpoint 1 \n");
        inst = 0x1E;
-       for (int i=0; i<NUM_JOINTS+1; ++i) {   
+       for (int i=1; i<NUM_JOINTS+1; i++) {   
 	    JointData& ji = joints[i];
 	    if (ji.flags == FLAG_ENABLE + FLAG_GOAL_CHANGED){    // If this joint's Goal has changed, add to sync write
                 buf[buf_offset++] = i;
@@ -396,7 +396,7 @@ void Update_Motors(Port* port, JointData* joints){
     	lenparam = 3;
         inst = 0x1A;
         printf("Got to checkpoint 2 \n");
-	for (int i=0; i<NUM_JOINTS+1; ++i) {   
+	for (int i=1; i<NUM_JOINTS+1; i++) {   
 	    JointData& ji = joints[i];
 	    if (ji.flags == FLAG_ENABLE + FLAG_GAINS_CHANGED){    // If this joint's gains have changed, add to sync write
 		buf[buf_offset++] = i;
@@ -413,7 +413,7 @@ void Update_Motors(Port* port, JointData* joints){
     	lenparam = 6;
         inst = 0x1A;
         printf("Got to checkpoint 3 \n");
-	for (int i=0; i<NUM_JOINTS+1; ++i) {   
+	for (int i=1; i<NUM_JOINTS+1; i++) {   
 	    JointData& ji = joints[i];
 	    if (ji.flags & FLAG_GOAL_CHANGED || ji.flags & FLAG_GAINS_CHANGED  && ji.flags & FLAG_ENABLE){    // If this joint's Goal has changed, add to sync write
 		buf[buf_offset++] = i;
