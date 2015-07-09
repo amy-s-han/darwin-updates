@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include "ports.h"
 #include <stdint.h>
+#include <math.h>
 
 using namespace std;
 
@@ -18,6 +19,7 @@ using namespace std;
 #define EYES (0)
 #define motor_LED (0)
 #define REGWRITE (0)
+#define total (1000)
 
 struct JointData {
     uint8_t  flags;
@@ -254,8 +256,8 @@ int Init_to_Pose(Port* port){
 void Set_Enables(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if(data[i-1] == 0)
-            ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
+	if(data[i] == 0)
+        ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
 	else
 	    ji.flags |= FLAG_ENABLE;
     }
@@ -266,7 +268,7 @@ int Set_P_Data(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
 	if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
-	    ji.p = data[i-1];
+	    ji.p = data[i];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -279,7 +281,7 @@ int Set_I_Data(JointData* joints, uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
 	if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
-	    ji.i = data[i-1];
+	    ji.i = data[i];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -291,8 +293,8 @@ int Set_D_Data(JointData* joints, uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
-	    ji.d = data[i-1];
+	if((ji.flags & FLAG_ENABLE) && (ji.d != data[i])){
+	    ji.d = data[i];
 	    ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
    	}
@@ -304,8 +306,8 @@ int Set_Pos_Data(JointData* joints, uint16_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
 	JointData& ji = joints[i];
-	if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
-	    ji.goal = data[i-1];
+	if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i])){
+	    ji.goal = data[i];
 	    ji.flags |= FLAG_GOAL_CHANGED;
             counter ++;
    	}
@@ -490,7 +492,7 @@ int main(int argc, char** argv){
 
 if(EYES){
     int color = MakeColor(230, 0, 230);
-     
+    
     // May want to put the cycling through colors back in
     // for a cool demo.
 
@@ -514,6 +516,46 @@ if(EYES){
     port->ClearPort();
     port->WritePort(packet, 9);
     usleep(2000);
+
+    getchar();
+
+    // 0x01C for eye LEDs, 0x1A for head LED
+    unsigned char txpacket[] = {0xFF, 0xFF, 0xC8, 0x05, 0x03, 0x1C, 0xE0, 0x03, 0};
+    txpacket[8] = CalculateChecksum(txpacket);
+    printf("%d \n", txpacket[8]);
+
+    int value = port->WritePort(txpacket, 9);
+
+
+    printf("press enter\n");
+    getchar();
+
+    double r[total] = {0, };
+    double g[total] = {0, };
+    double b[total] = {0, };
+
+    int count;
+
+    for(count = 0; count < total; count++){
+        r[count] = 255*sin(6.28*count/(total/2));
+        g[count] = 255*sin(6.28*count/(total/11));
+        b[count] = 255*sin(6.28*count/(total/21));
+    }
+
+    count = 0;
+    int newcolor;
+
+    while(count < total){
+        port->ClearPort();
+        newcolor = MakeColor(r[count], g[count], b[count]);
+        txpacket[6] = GetLowByte(newcolor);
+        txpacket[7] = GetHighByte(newcolor);
+        txpacket[8] = 0;
+        txpacket[8] = CalculateChecksum(txpacket);
+        port->WritePort(txpacket, 9);
+        usleep(10000);
+        count++;
+    } 
 }
 
     //do we want a time out???
