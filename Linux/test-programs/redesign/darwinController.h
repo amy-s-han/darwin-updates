@@ -71,6 +71,16 @@ class DarwinController {
         int Set_PID_Gain(unsigned char joint_ID, unsigned char P_Value, unsigned char I_Value, unsigned char D_Value);
         int Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled);
 
+        void DarwinController::Set_Enables(JointData* joints, uint8_t* data);
+        int DarwinController::Set_P_Data(JointData* joints, uint8_t* data);
+        int DarwinController::Set_I_Data(JointData* joints, uint8_t* data);
+        int DarwinController::Set_D_Data(JointData* joints, uint8_t* data);
+
+        int DarwinController::Set_Pos_Data(JointData* joints, uint16_t* data);
+        void DarwinController::Update_Motors(Port* port, JointData* joints);
+        
+        void DarwinController::foo(Port* port, JointData* joints);
+
 
 
 };
