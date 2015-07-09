@@ -320,7 +320,7 @@ int Set_Pos_Data(JointData* joints, uint16_t* data){
 // These only change data for one joint
 // and there isn't any indexing trickery (its taken care of in the functions)
 void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data){
-    JointData& ji = joints[motor_ID-1];
+    JointData& ji = joints[motor_ID];
     if(data == 0)
         ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
     else
@@ -329,20 +329,20 @@ void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data){
 }
 
 void Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
-    JointData& ji = joints[motor_ID-1];
+    JointData& ji = joints[motor_ID];
     ji.p = data;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
 
 void Set_I_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
-    JointData& ji = joints[motor_ID-1];
+    JointData& ji = joints[motor_ID];
     ji.i = data;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
 void Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
-    JointData& ji = joints[motor_ID-1];
+    JointData& ji = joints[motor_ID];
     ji.d = data;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
