@@ -318,32 +318,39 @@ int Set_Pos_Data(JointData* joints, uint16_t* data){
 }
 
 // These only change data for one joint
-// and there isn't any indexing trickery 
-void Set_Enables(JointData joint, uint8_t data){
+// and there isn't any indexing trickery (its taken care of in the functions)
+void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID-1];
     if(data == 0)
-        joint.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
+        ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
     else
-        joint.flags |= FLAG_ENABLE;
+        ji.flags |= FLAG_ENABLE;
+    }
 }
 
-void Set_P_Data(JointData joint, uint8_t data){
-    joint.p = data;
-    joint.flags |= FLAG_GAINS_CHANGED;
+void Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID-1];
+    ji.p = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
 }
 
-void Set_I_Data(JointData joint, uint8_t data){
-    joint.i = data;
-    joint.flags |= FLAG_GAINS_CHANGED;
+
+void Set_I_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID-1];
+    ji.i = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
 }
 
-void Set_D_Data(JointData joint, uint8_t data){
-    joint.d = data;
-    joint.flags |= FLAG_GAINS_CHANGED;
+void Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID-1];
+    ji.d = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
 }
 
-void Set_Pos_Data(JointData joint, uint16_t data){
-    joint.goal = data;
-    joint.flags |= FLAG_GOAL_CHANGED;
+int Set_Pos_Data(JointData* joints, unsigned char motor_ID, uint16_t data){
+    JointData& ji = joints[motor_ID-1];
+    ji.goal = data[i-1];
+    ji.flags |= FLAG_GOAL_CHANGED;
 }
 
 void Update_Motors(Port* port, JointData* joints){
@@ -459,6 +466,13 @@ void foo(Port* port, JointData* joints) {
     uint8_t dgains[20] = {0, };
     uint16_t goalpos[20] = {2048, };
 
+    enables[4] = 1;
+    enables[19] = 1;
+    enables[20] = 1;
+
+    goalpos[4] = 2048 - 200;
+    goalpos[19] = 2048 - 200;
+    goalpos[20] = 2048 - 200;
 
     Set_Enables(joints, enables);
     int poscount = Set_Pos_Data(joints, goalpos);
@@ -466,8 +480,9 @@ void foo(Port* port, JointData* joints) {
 //    Set_I_Data(joints, igains);
 //    Set_D_Data(joints, dgains);
 
-    printf("positions: %d\n", poscount);
+    Update_Motors(port, joints);
 
+    Set_Pos_Data(joints, 5, 2048 + 200);
     Update_Motors(port, joints);
 }
 
