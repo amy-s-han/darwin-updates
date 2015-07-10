@@ -748,11 +748,12 @@ int DarwinController::Set_Torque_Enable(unsigned char joint_ID, unsigned char is
 //for JointData struct
 
 // These set values for all motors and require and input array of 20
-// Index 0 of the array corresponds to the value for the first motor
+// Index 0 of the array corresponds to the value for motor 1
+// Index 0 of JointData joints[] corresponds to motor 0 -> not in use.
 
 // 0 to disable motor and !0 to enable (or just pass in 1 to enable..)
 void DarwinController::Set_Enables(uint8_t* data){
-    for(int i=1; i<NUM_JOINTS+1; i++){
+    for(int i=1; i<NUM_JOINTS; i++){
         JointData& ji = joints[i];
         if(data[i-1] == 0){
             ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
@@ -764,7 +765,7 @@ void DarwinController::Set_Enables(uint8_t* data){
 
 int DarwinController::Set_P_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS+1; i++){
+    for(int i=1; i<NUM_JOINTS; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
             ji.p = data[i-1];
@@ -777,7 +778,7 @@ int DarwinController::Set_P_Data(uint8_t* data){
 
 int DarwinController::Set_I_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS+1; i++){
+    for(int i=1; i<NUM_JOINTS; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
             ji.i = data[i-1];
@@ -790,7 +791,7 @@ int DarwinController::Set_I_Data(uint8_t* data){
 
 int DarwinController::Set_D_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS+1; i++){
+    for(int i=1; i<NUM_JOINTS; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
             ji.d = data[i-1];
@@ -803,7 +804,7 @@ int DarwinController::Set_D_Data(uint8_t* data){
 
 int DarwinController::Set_Pos_Data(uint16_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS+1; i++){
+    for(int i=1; i<NUM_JOINTS; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
             ji.goal = data[i-1];

@@ -24,6 +24,8 @@
 
 using namespace std;
 
+enum { ALT_NUM_JOINTS = 20 } ;
+
 //make a playback struct~~~
 struct Playback{
 
@@ -63,8 +65,8 @@ bool parse_file(Playback play) {
         return false;
     }
 
-    if (play.njoints != NUM_JOINTS) {
-        cerr << "incorrect # joints: got " << play.njoints << ", expected " << NUM_JOINTS << "\n";
+    if (play.njoints != ALT_NUM_JOINTS) {
+        cerr << "incorrect # joints: got " << play.njoints << ", expected " << ALT_NUM_JOINTS << "\n";
         return false;
     }
 
@@ -119,7 +121,7 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    assert( play.angles_rad.size() == play.nticks * NUM_JOINTS );
+    assert( play.angles_rad.size() == play.nticks * ALT_NUM_JOINTS );
 
     //Set all joints to be enabled in jointData
 
@@ -150,7 +152,7 @@ int main(int argc, char** argv){
     //Load first time tick into Joint Data
     uint16_t goalpos[20];
 
-    for(int i = 0; i < NUM_JOINTS; i++){
+    for(int i = 0; i < ALT_NUM_JOINTS; i++){
         double cur_angle = play.angles_rad[play.offset_counter];
         goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
         play.offset_counter++;
@@ -174,7 +176,7 @@ int main(int argc, char** argv){
 
         //put trajectory data into jointData
 
-        for (int i=0; i<NUM_JOINTS; ++i) {
+        for (int i=0; i<ALT_NUM_JOINTS; ++i) {
 
             if(play.offset_counter > play.angles_rad.size()){ //check if done
                 play.isPlaying = false;
@@ -194,7 +196,7 @@ int main(int argc, char** argv){
                 // error
                 printf("ERRORRRRR!");
             }
-            
+
             ++play.offset_counter;
         }
 
