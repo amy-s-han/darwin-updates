@@ -672,20 +672,20 @@ int DarwinController::MakeColor(int red, int green, int blue){
 }
 
 //int or float or double???
-double DarwinController::Ticks2DegAngle(double ticks){
-    return ticks / (4096/360.0);
+double DarwinController::Ticks2DegAngle(int ticks){
+    return ticks / (4096/360);
 }
 
-double DarwinController::DegAngle2Ticks(double angle){
-    return angle * (4096/360);
+int DarwinController::DegAngle2Ticks(double angle){
+    return (int)(angle * (4096/360));
 }
 
-double DarwinController::Ticks2RadAngle(double ticks){
+double DarwinController::Ticks2RadAngle(int ticks){
     return ticks / (4096 / (2*M_PI));
 }
 
-double DarwinController::RadAngle2Ticks(double angle){
-    return angle * (4096 / (2*M_PI));
+int DarwinController::RadAngle2Ticks(double angle){
+    return (int)(angle * (4096 / (2*M_PI)));
 }
 
 // Converts an angle given in degrees into motor ticks and sends write packet to motor 

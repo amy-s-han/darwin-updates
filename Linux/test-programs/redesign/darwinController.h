@@ -74,10 +74,10 @@ class DarwinController {
         bool Ping(int id, int *error);
         int MakeColor(int red, int green, int blue);
 
-    double Ticks2DegAngle(double ticks);
-    double DegAngle2Ticks(double angle);
-    double Ticks2RadAngle(double ticks);
-    double RadAngle2Ticks(double angle);
+        double Ticks2DegAngle(int ticks);
+        int DegAngle2Ticks(double angle);
+        double Ticks2RadAngle(int ticks);
+        int RadAngle2Ticks(double angle);
 
         int SetJointAngle(unsigned char joint_ID, int goal_angle);
         int SetMoveSpeed(unsigned char joint_ID, int move_speed);
