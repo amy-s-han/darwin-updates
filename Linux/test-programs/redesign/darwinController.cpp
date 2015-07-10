@@ -809,6 +809,40 @@ int DarwinController::Set_Pos_Data(uint16_t* data){
     return counter;
 }
 
+void DarwinController::Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID];
+    if(data == 0)
+        ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
+    else
+        ji.flags |= FLAG_ENABLE;
+ 
+}
+
+void DarwinController::Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID];
+    ji.p = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
+}
+
+
+void DarwinController::Set_I_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID];
+    ji.i = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
+}
+
+void DarwinController::Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data){
+    JointData& ji = joints[motor_ID];
+    ji.d = data;
+    ji.flags |= FLAG_GAINS_CHANGED;
+}
+
+int DarwinController::Set_Pos_Data(JointData* joints, unsigned char motor_ID, uint16_t data){
+    JointData& ji = joints[motor_ID];
+    ji.goal = data;
+    ji.flags |= FLAG_GOAL_CHANGED;
+}
+
 void DarwinController::Update_Motors(){
     int packet_count = 0;
     uint8_t change_flags = 0;
