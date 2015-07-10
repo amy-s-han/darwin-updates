@@ -22,13 +22,7 @@ class BulkReadData {
 
 };
 
-class DarwinController {
-	private:
-
-	public: 
-		Port port;
-        
-        struct JointData {
+struct JointData {
             uint8_t  flags;
             uint16_t goal;
             uint8_t p, i, d;
@@ -40,14 +34,22 @@ class DarwinController {
             FLAG_ENABLE = 0x80,
         };
 
-		BulkReadData BulkData[ID_BROADCAST]; //254
+class DarwinController {
+    private:
+
+    public: 
+        Port port;
+        
+            JointData joints[NUM_JOINTS];
+
+        BulkReadData BulkData[ID_BROADCAST]; //254
         unsigned char BulkReadTxPacket[266];
 
-		DarwinController();
-		~DarwinController();
+        DarwinController();
+        ~DarwinController();
 
         bool PowerDXL();
-		bool Initialize(const char* name);
+        bool Initialize(const char* name);
         void ClosePort();
 
         bool InitToPose();
@@ -77,6 +79,11 @@ class DarwinController {
         bool Ping(int id, int *error);
         int MakeColor(int red, int green, int blue);
 
+    double Ticks2DegAngle(double ticks);
+    double DegAngle2Ticks(double angle);
+    double Ticks2RadAngle(double ticks);
+    double RadAngle2Ticks(double angle);
+
         int SetJointAngle(unsigned char joint_ID, int goal_angle);
         int SetMoveSpeed(unsigned char joint_ID, int move_speed);
         int Set_P_Gain(unsigned char joint_ID, unsigned char P_Value);
@@ -85,15 +92,17 @@ class DarwinController {
         int Set_PID_Gain(unsigned char joint_ID, unsigned char P_Value, unsigned char I_Value, unsigned char D_Value);
         int Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled);
 
-        void Set_Enables(JointData* joints, uint8_t* data);
-        int Set_P_Data(JointData* joints, uint8_t* data);
-        int Set_I_Data(JointData* joints, uint8_t* data);
-        int Set_D_Data(JointData* joints, uint8_t* data);
 
-        int Set_Pos_Data(JointData* joints, uint16_t* data);
-        void Update_Motors(Port* port, JointData* joints);
+    //For JointData struct
+        void Set_Enables(uint8_t* data);
+        int Set_P_Data(uint8_t* data);
+        int Set_I_Data(uint8_t* data);
+        int Set_D_Data(uint8_t* data);
 
-        void foo(Port* port, JointData* joints);
+        int Set_Pos_Data(uint16_t* data);
+        void Update_Motors();
+
+        void foo();
 
 
 

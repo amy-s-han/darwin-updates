@@ -3,10 +3,10 @@
 set(sources
 	darwinController.cpp
 	CM730.cpp
-	test.cpp
+	playback_redesign.cpp
 	)
 
-add_executable(test ${sources})
+add_executable(playback_redesign ${sources})
 
-target_link_libraries(test darwin pthread rt)
+target_link_libraries(playback_redesign darwin pthread rt)
 
