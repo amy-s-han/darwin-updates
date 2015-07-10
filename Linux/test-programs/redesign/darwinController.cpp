@@ -673,18 +673,34 @@ int DarwinController::MakeColor(int red, int green, int blue){
 
 //int or float or double???
 double DarwinController::Ticks2DegAngle(int ticks){
+    if(ticks == 0){
+        return 0.0;
+    }
+
     return ticks / (4096/360);
 }
 
 int DarwinController::DegAngle2Ticks(double angle){
+    if(angle == 0.0){
+        return 0;
+    }
+
     return (int)(angle * (4096/360));
 }
 
 double DarwinController::Ticks2RadAngle(int ticks){
+    if(ticks == 0){
+        return 0.0;
+    }
+
     return ticks / (4096 / (2*M_PI));
 }
 
 int DarwinController::RadAngle2Ticks(double angle){
+    if(angle == 0.0){
+        return 0;
+    }
+    
     return (int)(angle * (4096 / (2*M_PI)));
 }
 
