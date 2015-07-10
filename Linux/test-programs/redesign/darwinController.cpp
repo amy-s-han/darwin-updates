@@ -333,6 +333,10 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
     if(port.WritePort(txpacket, length) == length){ //write to port
       printf("in readwrite length: %d\n", length);
 
+        if(txpacket[ID] = ID_BROADCAST){
+            return length;
+        }
+
         if(txpacket[INSTRUCTION] == BULK_READ){ //set bulk read vars
 
             num = (txpacket[LENGTH]-3) / 3;
@@ -480,8 +484,11 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 get_length -= i;
             }
         }
-    return return_length;
+        
+        return return_length;
     }
+
+    return length;
 }
 
 
@@ -741,23 +748,24 @@ int DarwinController::Set_Torque_Enable(unsigned char joint_ID, unsigned char is
 //for JointData struct
 void DarwinController::Set_Enables(uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    if(data[i-1] == 0)
+        JointData& ji = joints[i];
+        if(data[i-1] == 0){
             ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
-    else
-        ji.flags |= FLAG_ENABLE;
+        } else{
+            ji.flags |= FLAG_ENABLE;
+        }
     }
 }
 
 int DarwinController::Set_P_Data(uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
-        ji.p = data[i-1];
-        ji.flags |= FLAG_GAINS_CHANGED;
+        JointData& ji = joints[i];
+        if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
+            ji.p = data[i-1];
+            ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
-    }
+        }
     }
     return counter;
 }
@@ -765,12 +773,12 @@ int DarwinController::Set_P_Data(uint8_t* data){
 int DarwinController::Set_I_Data(uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
-        ji.i = data[i-1];
-        ji.flags |= FLAG_GAINS_CHANGED;
+        JointData& ji = joints[i];
+        if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
+            ji.i = data[i-1];
+            ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
-    }
+        }
     }
     return counter;
 }
@@ -778,12 +786,12 @@ int DarwinController::Set_I_Data(uint8_t* data){
 int DarwinController::Set_D_Data(uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
-        ji.d = data[i-1];
-        ji.flags |= FLAG_GAINS_CHANGED;
+        JointData& ji = joints[i];
+        if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
+            ji.d = data[i-1];
+            ji.flags |= FLAG_GAINS_CHANGED;
             counter ++;
-    }
+        }
     }
     return counter;
 }
@@ -791,12 +799,12 @@ int DarwinController::Set_D_Data(uint8_t* data){
 int DarwinController::Set_Pos_Data(uint16_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
-        ji.goal = data[i-1];
-        ji.flags |= FLAG_GOAL_CHANGED;
-            counter ++;
-    }
+        JointData& ji = joints[i];
+        if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
+            ji.goal = data[i-1];
+            ji.flags |= FLAG_GOAL_CHANGED;
+                counter ++;
+        }
     }
     return counter;
 }
@@ -808,13 +816,14 @@ void DarwinController::Update_Motors(){
     // figure out how many packets and what data gets sent
     for (int i=0; i<NUM_JOINTS+1; ++i) {
         const JointData& ji = joints[i];
-    bool enabled = ji.flags & FLAG_ENABLE; // pick off top bit to see if joint enabled
-    uint8_t changed = ji.flags & ~FLAG_ENABLE; // pick off bottom 7 bits
-    if (enabled && changed) { // if this motor is enabled and has new data
-        change_flags |= changed; // add in changes from this motor to set of all changes
-        packet_count += 1; // increment number of packets to send
+        bool enabled = ji.flags & FLAG_ENABLE; // pick off top bit to see if joint enabled
+        uint8_t changed = ji.flags & ~FLAG_ENABLE; // pick off bottom 7 bits
+        if (enabled && changed) { // if this motor is enabled and has new data
+            change_flags |= changed; // add in changes from this motor to set of all changes
+            packet_count += 1; // increment number of packets to send
+        }
     }
-    }
+
     // at this point can tell how many bytes per motor to send
     uint8_t buf[120] = {0, };
     int buf_offset = 0;
@@ -824,53 +833,53 @@ void DarwinController::Update_Motors(){
     unsigned char inst;
 
     if (change_flags == FLAG_GOAL_CHANGED){  // If any of Goals changed but none of the PIDs changed
-       lenparam = 2;
-       inst = 0x1E;
-       for (int i=0; i<NUM_JOINTS+1; ++i) {   
-        JointData& ji = joints[i];
-        if (ji.flags == FLAG_ENABLE + FLAG_GOAL_CHANGED){    // If this joint's Goal has changed, add to sync write
+        lenparam = 2;
+        inst = 0x1E;
+        for (int i=0; i<NUM_JOINTS+1; ++i) {   
+            JointData& ji = joints[i];
+            if (ji.flags == FLAG_ENABLE + FLAG_GOAL_CHANGED){    // If this joint's Goal has changed, add to sync write
                 buf[buf_offset++] = i;
-            buf[buf_offset++] = GetLowByte(ji.goal);
-            buf[buf_offset++] = GetHighByte(ji.goal);
-        ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
-        numparams += 3;
-        }
+                buf[buf_offset++] = GetLowByte(ji.goal);
+                buf[buf_offset++] = GetHighByte(ji.goal);
+                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+                numparams += 3;
+            }
         }
     }
 
     else if (change_flags == FLAG_GAINS_CHANGED){ // If any of the gains changed but none of the Goals changed
         lenparam = 3;
         inst = 0x1A;
-    for (int i=0; i<NUM_JOINTS+1; ++i) {   
-        JointData& ji = joints[i];
-        if (ji.flags == FLAG_ENABLE + FLAG_GAINS_CHANGED){    // If this joint's gains have changed, add to sync write
-        buf[buf_offset++] = i;
-        buf[buf_offset++] = ji.d;
-        buf[buf_offset++] = ji.i;
-        buf[buf_offset++] = ji.p;
-        ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
-        numparams += 4;
+        for (int i=0; i<NUM_JOINTS+1; ++i) {   
+            JointData& ji = joints[i];
+            if (ji.flags == FLAG_ENABLE + FLAG_GAINS_CHANGED){    // If this joint's gains have changed, add to sync write
+                buf[buf_offset++] = i;
+                buf[buf_offset++] = ji.d;
+                buf[buf_offset++] = ji.i;
+                buf[buf_offset++] = ji.p;
+                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+                numparams += 4;
+            }
         }
-    }
     }
 
     else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ // If both PID and Goal have changed
         lenparam = 6;
         inst = 0x1A;
-    for (int i=0; i<NUM_JOINTS+1; ++i) {   
-        JointData& ji = joints[i];
-        if (ji.flags & FLAG_GOAL_CHANGED || ji.flags & FLAG_GAINS_CHANGED  && ji.flags & FLAG_ENABLE){    // If this joint's Goal has changed, add to sync write
-        buf[buf_offset++] = i;
-        buf[buf_offset++] = ji.d;
-        buf[buf_offset++] = ji.i;
-        buf[buf_offset++] = ji.p;
-        buf[buf_offset++] = 0x00;  // I hate everything
-        buf[buf_offset++] = GetLowByte(ji.goal);
-        buf[buf_offset++] = GetHighByte(ji.goal);
-        ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
-        numparams += 7;
+        for (int i=0; i<NUM_JOINTS+1; ++i) {   
+            JointData& ji = joints[i];
+            if (ji.flags & FLAG_GOAL_CHANGED || ji.flags & FLAG_GAINS_CHANGED  && ji.flags & FLAG_ENABLE){    // If this joint's Goal has changed, add to sync write
+                buf[buf_offset++] = i;
+                buf[buf_offset++] = ji.d;
+                buf[buf_offset++] = ji.i;
+                buf[buf_offset++] = ji.p;
+                buf[buf_offset++] = 0x00;  // I hate everything
+                buf[buf_offset++] = GetLowByte(ji.goal);
+                buf[buf_offset++] = GetHighByte(ji.goal);
+                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+                numparams += 7;
+            }
         }
-    }
     }
 
     if(packet_count){
@@ -897,9 +906,9 @@ void DarwinController::foo() {
 
     Set_Enables(enables);
     int poscount = Set_Pos_Data(goalpos);
-//    Set_P_Data(joints, pgains);
-//    Set_I_Data(joints, igains);
-//    Set_D_Data(joints, dgains);
+//    Set_P_Data(pgains);
+//    Set_I_Data(igains);
+//    Set_D_Data(dgains);
 
     printf("positions: %d\n", poscount);
 

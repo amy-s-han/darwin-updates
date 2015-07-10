@@ -27,15 +27,15 @@ using namespace std;
 //make a playback struct~~~
 struct Playback{
 
-	bool isPlaying;
-	const char* file;
-	int offset_counter; //keeps track of index within playback file
-	double dt;
-		
-	size_t njoints;
-	size_t nticks;
+  bool isPlaying;
+  const char* file;
+  int offset_counter; //keeps track of index within playback file
+  double dt;
+  	
+  size_t njoints;
+  size_t nticks;
 
-	vector<double> angles_rad;
+  vector<double> angles_rad;
 
 };
 
@@ -123,7 +123,7 @@ int main(int argc, char** argv){
 
 	//Set all joints to be enabled in jointData
 
-        uint8_t enables[20] = {1, };
+  uint8_t enables[20] = {1, };
 
 	darCon.Set_Enables(enables);
 
@@ -131,30 +131,30 @@ int main(int argc, char** argv){
   // reset speed or gains?
 
 
-        uint8_t pgains[20] = {0, };
-        uint8_t igains[20] = {0, };
-        uint8_t dgains[20] = {0, };
+  uint8_t pgains[20] = {0, };
+  uint8_t igains[20] = {0, };
+  uint8_t dgains[20] = {0, };
     
 
 
-    darCon.Set_P_Data(pgains);
-    darCon.Set_I_Data(igains);
-    darCon.Set_D_Data(dgains);
+  darCon.Set_P_Data(pgains);
+  darCon.Set_I_Data(igains);
+  darCon.Set_D_Data(dgains);
 
-    darCon.Update_Motors();
+  darCon.Update_Motors();
 
-    usleep(100000); // not sure why i want this sleep
+  usleep(100000); // not sure why i want this sleep
 
   //Load first time tick into Joint Data
-    uint16_t goalpos[20];
-    for(int i = 0; i < NUM_JOINTS; i++){
-	double cur_angle = play.angles_rad[play.offset_counter];
-	goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
-	play.offset_counter++;
-    }
+  uint16_t goalpos[20];
+  for(int i = 0; i < NUM_JOINTS; i++){
+  	double cur_angle = play.angles_rad[play.offset_counter];
+  	goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
+  	play.offset_counter++;
+  }
 
-    int poscount = darCon.Set_Pos_Data(goalpos);
-    printf("poscount: how many goal positions were successfully changed: %d\n", poscount);
+  int poscount = darCon.Set_Pos_Data(goalpos);
+  printf("poscount: how many goal positions were successfully changed: %d\n", poscount);
 
   // initialize to first tick -> call updateMotors or whatever it's called
 	darCon.Update_Motors();
@@ -186,7 +186,7 @@ int main(int argc, char** argv){
       
       goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
       
-	//do i still need this?
+      // do i still need this?
       if (cur_angle < -8 || cur_angle > 8) {
         // error
         printf("ERRORRRRR!");
@@ -194,11 +194,11 @@ int main(int argc, char** argv){
       ++play.offset_counter;
     }
 
-	poscount = darCon.Set_Pos_Data(goalpos);
-	printf("poscount: %d\n", poscount);
+    poscount = darCon.Set_Pos_Data(goalpos);
+    printf("poscount: %d\n", poscount);
 
-    //updateMotors to write out all changes. 
-	darCon.Update_Motors();
+      //updateMotors to write out all changes. 
+    darCon.Update_Motors();
 
     sleep(0.008); //sleep 8ms before next time tick -> still worried about this.
 

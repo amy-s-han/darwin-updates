@@ -155,6 +155,12 @@ enum{
 };
 
 
+enum {
+    FLAG_GOAL_CHANGED = 0x01,
+    FLAG_GAINS_CHANGED = 0x02,
+    FLAG_ENABLE = 0x80,
+};
+
 
 class Port {
 	

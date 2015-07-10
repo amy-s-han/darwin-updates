@@ -23,16 +23,11 @@ class BulkReadData {
 };
 
 struct JointData {
-            uint8_t  flags;
-            uint16_t goal;
-            uint8_t p, i, d;
-        };
+        uint8_t  flags;
+        uint16_t goal;
+        uint8_t p, i, d;
+};
 
-        enum {
-            FLAG_GOAL_CHANGED = 0x01,
-            FLAG_GAINS_CHANGED = 0x02,
-            FLAG_ENABLE = 0x80,
-        };
 
 class DarwinController {
     private:
@@ -93,17 +88,19 @@ class DarwinController {
         int Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled);
 
 
-    //For JointData struct
+        // For JointData struct
+        // These set values for all motors and require and input array of 20
         void Set_Enables(uint8_t* data);
         int Set_P_Data(uint8_t* data);
         int Set_I_Data(uint8_t* data);
         int Set_D_Data(uint8_t* data);
 
-        void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data);
-        void Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
-        void Set_I_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
-        void Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
-        int Set_Pos_Data(JointData* joints, unsigned char motor_ID, uint16_t data);
+        // These set individual motor values
+        void Set_Enables(unsigned char motor_ID, uint8_t value);
+        void Set_P_Data(unsigned char motor_ID, uint8_t value);
+        void Set_I_Data(unsigned char motor_ID, uint8_t value);
+        void Set_D_Data(unsigned char motor_ID, uint8_t value);
+        int Set_Pos_Data(unsigned char motor_ID, uint16_t value);
 
         int Set_Pos_Data(uint16_t* data);
         void Update_Motors();
