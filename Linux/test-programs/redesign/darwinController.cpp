@@ -746,6 +746,11 @@ int DarwinController::Set_Torque_Enable(unsigned char joint_ID, unsigned char is
 
 
 //for JointData struct
+
+// These set values for all motors and require and input array of 20
+// Index 0 of the array corresponds to the value for the first motor
+
+// 0 to disable motor and !0 to enable (or just pass in 1 to enable..)
 void DarwinController::Set_Enables(uint8_t* data){
     for(int i=1; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
@@ -818,31 +823,34 @@ void DarwinController::Set_Enables(unsigned char motor_ID, uint8_t data){
  
 }
 
-void DarwinController::Set_P_Data(unsigned char motor_ID, uint8_t data){
+
+// These set individual motor values
+void DarwinController::Set_P_Data(unsigned char motor_ID, uint8_t value){
     JointData& ji = joints[motor_ID];
-    ji.p = data;
+    ji.p = value;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
 
-void DarwinController::Set_I_Data(unsigned char motor_ID, uint8_t data){
+void DarwinController::Set_I_Data(unsigned char motor_ID, uint8_t value){
     JointData& ji = joints[motor_ID];
-    ji.i = data;
+    ji.i = value;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
-void DarwinController::Set_D_Data(unsigned char motor_ID, uint8_t data){
+void DarwinController::Set_D_Data(unsigned char motor_ID, uint8_t value){
     JointData& ji = joints[motor_ID];
-    ji.d = data;
+    ji.d = value;
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
-int DarwinController::Set_Pos_Data(unsigned char motor_ID, uint16_t data){
+int DarwinController::Set_Pos_Data(unsigned char motor_ID, uint16_t value){
     JointData& ji = joints[motor_ID];
-    ji.goal = data;
+    ji.goal = value;
     ji.flags |= FLAG_GOAL_CHANGED;
 }
 
+// call this to write the changes in the JointData struct out to port
 void DarwinController::Update_Motors(){
     int packet_count = 0;
     uint8_t change_flags = 0;
@@ -850,11 +858,21 @@ void DarwinController::Update_Motors(){
     // figure out how many packets and what data gets sent
     for (int i=0; i<NUM_JOINTS+1; ++i) {
         const JointData& ji = joints[i];
-        bool enabled = ji.flags & FLAG_ENABLE; // pick off top bit to see if joint enabled
-        uint8_t changed = ji.flags & ~FLAG_ENABLE; // pick off bottom 7 bits
-        if (enabled && changed) { // if this motor is enabled and has new data
-            change_flags |= changed; // add in changes from this motor to set of all changes
-            packet_count += 1; // increment number of packets to send
+
+        // pick off top bit to see if joint enabled
+        bool enabled = ji.flags & FLAG_ENABLE; 
+
+        // pick off bottom 7 bits
+        uint8_t changed = ji.flags & ~FLAG_ENABLE; 
+
+        // if this motor is enabled and has new data
+        if (enabled && changed) { 
+
+            // add in changes from this motor to set of all changes
+            change_flags |= changed; 
+
+            // increment number of packets to send
+            packet_count += 1; 
         }
     }
 
@@ -866,51 +884,66 @@ void DarwinController::Update_Motors(){
     unsigned char txpacket[128] = {0, };
     unsigned char inst;
 
-    if (change_flags == FLAG_GOAL_CHANGED){  // If any of Goals changed but none of the PIDs changed
+    // If any of Goals changed but none of the PIDs changed
+    if (change_flags == FLAG_GOAL_CHANGED){  
         lenparam = 2;
         inst = 0x1E;
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
-            if (ji.flags == FLAG_ENABLE + FLAG_GOAL_CHANGED){    // If this joint's Goal has changed, add to sync write
+
+            // If this joint's Goal has changed, add to sync write
+            if (ji.flags == FLAG_ENABLE + FLAG_GOAL_CHANGED){    
                 buf[buf_offset++] = i;
                 buf[buf_offset++] = GetLowByte(ji.goal);
                 buf[buf_offset++] = GetHighByte(ji.goal);
-                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+
+                // cleared the changed bits cause we are about to send this
+                ji.flags = FLAG_ENABLE; 
                 numparams += 3;
             }
         }
     }
 
-    else if (change_flags == FLAG_GAINS_CHANGED){ // If any of the gains changed but none of the Goals changed
+     // If any of the gains changed but none of the Goals changed
+    else if (change_flags == FLAG_GAINS_CHANGED){
         lenparam = 3;
         inst = 0x1A;
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
-            if (ji.flags == FLAG_ENABLE + FLAG_GAINS_CHANGED){    // If this joint's gains have changed, add to sync write
+
+            // If this joint's gains have changed, add to sync write
+            if (ji.flags == FLAG_ENABLE + FLAG_GAINS_CHANGED){    
                 buf[buf_offset++] = i;
                 buf[buf_offset++] = ji.d;
                 buf[buf_offset++] = ji.i;
                 buf[buf_offset++] = ji.p;
-                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+
+                // cleared the changed bits cause we are about to send this
+                ji.flags = FLAG_ENABLE; 
                 numparams += 4;
             }
         }
     }
 
-    else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ // If both PID and Goal have changed
+    // If both PID and Goal have changed
+    else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ 
         lenparam = 6;
         inst = 0x1A;
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
-            if (ji.flags & FLAG_GOAL_CHANGED || ji.flags & FLAG_GAINS_CHANGED  && ji.flags & FLAG_ENABLE){    // If this joint's Goal has changed, add to sync write
+
+            // If this joint's Goal has changed, add to sync write
+            if (ji.flags & FLAG_GOAL_CHANGED || ji.flags & FLAG_GAINS_CHANGED  && ji.flags & FLAG_ENABLE){    
                 buf[buf_offset++] = i;
                 buf[buf_offset++] = ji.d;
                 buf[buf_offset++] = ji.i;
                 buf[buf_offset++] = ji.p;
                 buf[buf_offset++] = 0x00;  // I hate everything
-                buf[buf_offset++] = GetLowByte(ji.goal);
+                buf[buf_offset++] = GetLowByte(ji.goal); // shhh it's ok
                 buf[buf_offset++] = GetHighByte(ji.goal);
-                ji.flags = FLAG_ENABLE; // cleared the changed bits cause we are about to send this
+
+                // cleared the changed bits cause we are about to send this
+                ji.flags = FLAG_ENABLE; 
                 numparams += 7;
             }
         }
