@@ -42,7 +42,7 @@ struct Playback{
 };
 
 
-bool parse_file(Playback play) {
+bool parse_file(Playback& play) {
 
     ifstream istr(play.file);
     if (!istr.is_open()) {
@@ -82,15 +82,18 @@ bool parse_file(Playback play) {
 
     play.angles_rad.resize(play.nticks * play.njoints);
 
-    for (size_t t=0; t<play.nticks; ++t) {
-        for (size_t i=0; i<play.njoints; ++i) { 
+    for (size_t t = 0; t < play.nticks; ++t) {
+        for (size_t i = 0; i < play.njoints; ++i) { 
             if (!(istr >> play.angles_rad[play.offset_counter])) {
                 cerr << "error parsing angle!\n";
                 return false;
             }
+	    
+
             ++play.offset_counter;
         }
     }
+        
 
     return true;
 
@@ -109,7 +112,7 @@ int main(int argc, char** argv){
 
     Playback play = {false, argv[1], 0}; //initialize first 3 vars in struct
 
-    if (parse_file(play)){
+    if (!parse_file(play)){
         cerr << "no trajectory loaded, exiting.\n";
         return 1;
     }
@@ -125,7 +128,15 @@ int main(int argc, char** argv){
 
     //Set all joints to be enabled in jointData
 
-    uint8_t enables[20] = {1, };
+    uint8_t enables[20];
+    
+    for(int i=0; i<20; i++){
+      enables[i] = 1;
+    }
+
+    for(int i=0; i<20; i++){
+      printf("enable %d: %d\n", enables[i]);
+    }
 
     darCon.Set_Enables(enables);
 
@@ -145,18 +156,37 @@ int main(int argc, char** argv){
 
     darCon.Update_Motors();
 
-    getchar(); // for testing
-
     usleep(100000); // not sure why i want this sleep
+
+
+    play.offset_counter = 0; //reset to 0!
+
+    printf("play.angles_rad.size() = %d\n", int(play.angles_rad.size()));
 
     //Load first time tick into Joint Data
     uint16_t goalpos[20];
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
+      printf("In for loop: %d\n", i);
+      printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
+      
         double cur_angle = play.angles_rad[play.offset_counter];
+	printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
         goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
         play.offset_counter++;
+	getchar();
     }
+
+    printf("Finished loading first tick\n");
+    getchar();
+
+    for(int i = 0; i < ALT_NUM_JOINTS; i++){
+      printf("goal %d: %d\n", i, goalpos[i]);
+    }
+
+    printf("press enter to continue\n");
+    getchar();
+
 
     int poscount = darCon.Set_Pos_Data(goalpos);
     printf("poscount: how many goal positions were successfully changed: %d\n", poscount);

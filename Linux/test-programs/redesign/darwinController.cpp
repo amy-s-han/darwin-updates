@@ -9,6 +9,8 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include <inttypes.h> //for debugging: 
+
 #include "darwinController.h"
 
 #define NUM_JOINTS      (20)
@@ -69,7 +71,7 @@ DarwinController::DarwinController(){
     for(int i = 0; i<NUM_JOINTS+1; i++){
     JointData& ji = joints[i];
     ji.flags = 0;
-        ji.goal = 2048;
+        ji.goal = -9999;
         ji.p = 0x32;
         ji.i = 0;
         ji.d = 0;
@@ -682,7 +684,7 @@ double DarwinController::Ticks2DegAngle(int ticks){
 
 int DarwinController::DegAngle2Ticks(double angle){
     if(angle == 0.0){
-        return 0;
+        return 2048;
     }
 
     return (int)(angle * (4096/360));
@@ -698,7 +700,7 @@ double DarwinController::Ticks2RadAngle(int ticks){
 
 int DarwinController::RadAngle2Ticks(double angle){
     if(angle == 0.0){
-        return 0;
+        return 2048;
     }
     
     return (int)(angle * (4096 / (2*M_PI)));
@@ -820,7 +822,12 @@ int DarwinController::Set_D_Data(uint8_t* data){
 
 int DarwinController::Set_Pos_Data(uint16_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS; i++){
+    for(int i=1; i<NUM_JOINTS+1; i++){
+      printf("In setposdata %d: %d     ",i, data[i-1]);
+      printf("flags & enable: %d", (joints[i].flags & FLAG_ENABLE));
+      printf("goal != data: %d\n", (joints[i].goal != data[i-1]));
+
+
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
             ji.goal = data[i-1];
