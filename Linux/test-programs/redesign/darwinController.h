@@ -99,6 +99,12 @@ class DarwinController {
         int Set_I_Data(uint8_t* data);
         int Set_D_Data(uint8_t* data);
 
+        void Set_Enables(JointData* joints, unsigned char motor_ID, uint8_t data);
+        void Set_P_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
+        void Set_I_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
+        void Set_D_Data(JointData* joints, unsigned char motor_ID, uint8_t data);
+        int Set_Pos_Data(JointData* joints, unsigned char motor_ID, uint16_t data);
+
         int Set_Pos_Data(uint16_t* data);
         void Update_Motors();
 

@@ -195,7 +195,7 @@ int main(int argc, char** argv){
     }
 
 	poscount = darCon.Set_Pos_Data(goalpos);
-	printf("poscount: %d\n", poscount);make
+	printf("poscount: %d\n", poscount);
 
     //updateMotors to write out all changes. 
 	darCon.Update_Motors();
