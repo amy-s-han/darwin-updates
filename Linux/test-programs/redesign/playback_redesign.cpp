@@ -135,7 +135,7 @@ int main(int argc, char** argv){
     }
 
     for(int i=0; i<20; i++){
-      printf("enable %d: %d\n", enables[i]);
+      printf("enable %d: %d\n", i, enables[i]);
     }
 
     darCon.Set_Enables(enables);
@@ -167,24 +167,27 @@ int main(int argc, char** argv){
     uint16_t goalpos[20];
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
-      printf("In for loop: %d\n", i);
-      printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
+        printf("In for loop: %d\n", i);
+        printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
       
         double cur_angle = play.angles_rad[play.offset_counter];
-	printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
+	    printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
         goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
         play.offset_counter++;
-	getchar();
+	    getchar();
     }
 
     printf("Finished loading first tick\n");
     getchar();
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
-      printf("goal %d: %d\n", i, goalpos[i]);
+        printf("goal %d: %d\n", i, goalpos[i]);
     }
 
     printf("press enter to continue\n");
+    getchar();
+
+    printf("Press enter to Set_Pos_Data\n");
     getchar();
 
 
