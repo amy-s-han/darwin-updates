@@ -131,16 +131,13 @@ int main(int argc, char** argv){
 
     for(int i = 0; i < NUM_JOINTS; i++){
         speedParams[3*i] = i+1;
-        speedParams[5*i+1] = 0x40;
-        speedParams[5*i+2] = 0x00;
+        speedParams[3*i+1] = 0x40;
+        speedParams[3*i+2] = 0x00;
     }
 
     int speed_syncwrite_result = darCon.SyncWrite(speedTxPacket, 0x20, speedParams, 60, 2);
 
-    printf("speed_syncwrite_result: %d\n", speed_syncwrite_result);
-
     printf("NUM_JOINTS: %d and ALT_NUM_JOINTS: %d\n\n", NUM_JOINTS, ALT_NUM_JOINTS);
-    getchar();
 
     assert( play.angles_rad.size() == play.nticks * ALT_NUM_JOINTS );
 
@@ -164,6 +161,7 @@ int main(int argc, char** argv){
 
     for(int i = 0; i < 20; i++){
       pgains[i] = 5; // what to set gains to initially???
+      igains[i] = 1;
     }
 
     darCon.Set_P_Data(pgains);
@@ -193,14 +191,10 @@ int main(int argc, char** argv){
     }
 
     printf("Finished loading first tick\n");
-    getchar();
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
         printf("goal %d: %d\n", i, goalpos[i]);
     }
-
-    printf("press enter to continue\n");
-    getchar();
 
     printf("Press enter to Set_Pos_Data\n");
     getchar();
@@ -215,17 +209,12 @@ int main(int argc, char** argv){
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
 
-    printf("returning now for safety\n");
-    return 0;
-
     //start playing
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
     }
 
     while(play.isPlaying){
-        printf("Press Enter to continue.\n");
-        getchar();
 
         //put trajectory data into jointData
 
@@ -244,11 +233,6 @@ int main(int argc, char** argv){
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
 
-
-            printf("In for loop: %d\n", i);
-            printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
-            printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
-
             // do i still need this?
             if (cur_angle < -8 || cur_angle > 8) {
                 // error
@@ -258,14 +242,7 @@ int main(int argc, char** argv){
             ++play.offset_counter;
         }
 
-        printf("press enter to Set_Pos_Data\n");
-        getchar();
-
         poscount = darCon.Set_Pos_Data(goalpos);
-        printf("poscount: %d\n", poscount);
-
-        printf("press enter to update motors\n");
-        getchar();
 
         //updateMotors to write out all changes. 
         darCon.Update_Motors();

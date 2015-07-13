@@ -683,11 +683,8 @@ double DarwinController::Ticks2DegAngle(int ticks){
 }
 
 int DarwinController::DegAngle2Ticks(double angle){
-    if(angle == 0.0){
-        return 2048;
-    }
 
-    return (int)(angle * (4096/360));
+    return (int)(2048 + angle * (4096/360));
 }
 
 double DarwinController::Ticks2RadAngle(int ticks){
@@ -699,11 +696,7 @@ double DarwinController::Ticks2RadAngle(int ticks){
 }
 
 int DarwinController::RadAngle2Ticks(double angle){
-    if(angle == 0.0){
-        return 2048;
-    }
-    
-    return (int)(angle * (4096 / (2*M_PI)));
+    return (int)(2048 + angle * (4096 / (2*M_PI)));
 }
 
 // Converts an angle given in degrees into motor ticks and sends write packet to motor 
@@ -826,9 +819,6 @@ int DarwinController::Set_Pos_Data(uint16_t* data){
     int counter = 0;
 
     for(int i=1; i<NUM_JOINTS+1; i++){
-      printf("In setposdata %d:   flags: %d ", i, (joints[i].flags & FLAG_ENABLE));
-      printf("goal!=data: %d ", (joints[i].goal != data[i-1]));
-
 
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.goal != data[i-1])){
@@ -836,7 +826,6 @@ int DarwinController::Set_Pos_Data(uint16_t* data){
             ji.flags |= FLAG_GOAL_CHANGED;
                 counter ++;
         }
-	printf("new goal: %d, new flags: %d\n", ji.goal, ji.flags);
     }
     return counter;
 }
@@ -879,6 +868,7 @@ int DarwinController::Set_Pos_Data(unsigned char motor_ID, uint16_t value){
 
 // call this to write the changes in the JointData struct out to port
 void DarwinController::Update_Motors(){
+
     int packet_count = 0;
     uint8_t change_flags = 0;
 
