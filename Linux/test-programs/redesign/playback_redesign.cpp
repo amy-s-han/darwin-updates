@@ -209,6 +209,35 @@ int main(int argc, char** argv){
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
 
+    unsigned char blkdata[MAXNUM_RXPARAM] = {0, };
+    darCon.BulkRead(blkdata);
+    int buf = 30;
+
+    for(int i = 0; i<20; i++){
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d ", blkdata[buf++]);
+    printf("%d \n", blkdata[buf++]);}
+/*
     //start playing
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
@@ -256,10 +285,9 @@ int main(int argc, char** argv){
         sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
 	ticknum++;
     }
-
+*/
     printf("Press ENTER to close port\n");
     getchar();
 
     darCon.ClosePort();
-
 }

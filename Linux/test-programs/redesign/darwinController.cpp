@@ -324,6 +324,8 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
     int length = 0;
+    int count = 0;
+    unsigned char info[MAXNUM_RXPARAM] = {0, };
 
     length = txpacket[LENGTH] + 4;
     
@@ -452,6 +454,11 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
                         //printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+
+                        // *************************************
+                        info[count++] = rxpacket[PARAMETER + j];
+                        // *************************************
+
                     }
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
@@ -485,6 +492,13 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 }
                 get_length -= i;
             }
+
+            //****************************************
+            int buf = 30;
+            count = 0;
+            for(int i = 0; i<20; i++)
+                rxpacket[count++] = info[buf++];
+            //****************************************
         }
         
         return return_length;
