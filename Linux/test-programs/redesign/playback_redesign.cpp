@@ -201,7 +201,7 @@ int main(int argc, char** argv){
 
 
     int poscount = darCon.Set_Pos_Data(goalpos);
-    printf("poscount: how many goal positions were successfully changed: %d\n", poscount);
+    printf("poscount: %d\n", poscount);
 
     // initialize to first tick
     darCon.Update_Motors();
@@ -213,8 +213,12 @@ int main(int argc, char** argv){
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
     }
-
+    
+    int ticknum = 1;
     while(play.isPlaying){
+      //      printf("Press enter for tick %d\n", ticknum + 1);
+      //      getchar();
+      printf("Tick: %d\n", ticknum+1);
 
         //put trajectory data into jointData
 
@@ -230,6 +234,8 @@ int main(int argc, char** argv){
             // note motor indices start at 1, so need to add i+1 for motor_number
 
             double cur_angle = play.angles_rad[play.offset_counter];
+	    printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
+	    
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
 
@@ -247,8 +253,8 @@ int main(int argc, char** argv){
         //updateMotors to write out all changes. 
         darCon.Update_Motors();
 
-        sleep(0.008); //sleep 8ms before next time tick -> still worried about this.
-
+        sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
+	ticknum++;
     }
 
     printf("Press ENTER to close port\n");

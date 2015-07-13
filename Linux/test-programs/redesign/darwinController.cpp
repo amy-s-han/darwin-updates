@@ -333,7 +333,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
     int num = 0; 
 
     if(port.WritePort(txpacket, length) == length){ //write to port
-      printf("in readwrite length: %d\n", length);
+      //printf("in readwrite length: %d\n", length);
 
         if(txpacket[ID] = ID_BROADCAST){
             return length;
@@ -518,7 +518,7 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
     
-    printf("In syncwrite len: %d\n", len);
+    //printf("In syncwrite len: %d\n", len);
 
     return ReadWrite(packet, rxpacket);
     //return port.WritePort(packet, len+1); /alt method
