@@ -124,6 +124,21 @@ int main(int argc, char** argv){
         return 0;
     }
 
+    // temp set speed -> seriously consider keeping this???
+
+    unsigned char speedTxPacket[MAXNUM_TXPARAM];
+    unsigned char speedParams[60]; // 3 params each for 20 motors
+
+    for(int i = 0; i < NUM_JOINTS; i++){
+        speedParams[3*i] = i+1;
+        speedParams[3*i+1] = 0x40;
+        speedParams[3*i+2] = 0x00;
+    }
+
+    int speed_syncwrite_result = darCon.SyncWrite(speedTxPacket, 0x20, speedParams, 60, 2);
+
+    printf("NUM_JOINTS: %d and ALT_NUM_JOINTS: %d\n\n", NUM_JOINTS, ALT_NUM_JOINTS);
+
     assert( play.angles_rad.size() == play.nticks * ALT_NUM_JOINTS );
 
     //Set all joints to be enabled in jointData
@@ -132,10 +147,6 @@ int main(int argc, char** argv){
     
     for(int i=0; i<20; i++){
       enables[i] = 1;
-    }
-
-    for(int i=0; i<20; i++){
-      printf("enable %d: %d\n", i, enables[i]);
     }
 
     darCon.Set_Enables(enables);
@@ -148,13 +159,16 @@ int main(int argc, char** argv){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
-
+    for(int i = 0; i < 20; i++){
+      pgains[i] = 5; // what to set gains to initially???
+      igains[i] = 1;
+    }
 
     darCon.Set_P_Data(pgains);
     darCon.Set_I_Data(igains);
     darCon.Set_D_Data(dgains);
 
-    darCon.Update_Motors();
+     darCon.Update_Motors();
 
     usleep(100000); // not sure why i want this sleep
 
@@ -167,32 +181,27 @@ int main(int argc, char** argv){
     uint16_t goalpos[20];
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
-        printf("In for loop: %d\n", i);
-        printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
+      //printf("In for loop: %d\n", i);
+      //printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
       
         double cur_angle = play.angles_rad[play.offset_counter];
-	    printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
+    //printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
         goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
         play.offset_counter++;
-	    getchar();
     }
 
     printf("Finished loading first tick\n");
-    getchar();
 
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
         printf("goal %d: %d\n", i, goalpos[i]);
     }
-
-    printf("press enter to continue\n");
-    getchar();
 
     printf("Press enter to Set_Pos_Data\n");
     getchar();
 
 
     int poscount = darCon.Set_Pos_Data(goalpos);
-    printf("poscount: how many goal positions were successfully changed: %d\n", poscount);
+    printf("poscount: %d\n", poscount);
 
     // initialize to first tick
     darCon.Update_Motors();
@@ -204,8 +213,12 @@ int main(int argc, char** argv){
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
     }
-
+    
+    int ticknum = 1;
     while(play.isPlaying){
+      //      printf("Press enter for tick %d\n", ticknum + 1);
+      //      getchar();
+      printf("Tick: %d\n", ticknum+1);
 
         //put trajectory data into jointData
 
@@ -221,6 +234,8 @@ int main(int argc, char** argv){
             // note motor indices start at 1, so need to add i+1 for motor_number
 
             double cur_angle = play.angles_rad[play.offset_counter];
+	    printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
+	    
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
 
@@ -234,13 +249,12 @@ int main(int argc, char** argv){
         }
 
         poscount = darCon.Set_Pos_Data(goalpos);
-        printf("poscount: %d\n", poscount);
 
         //updateMotors to write out all changes. 
         darCon.Update_Motors();
 
-        sleep(0.008); //sleep 8ms before next time tick -> still worried about this.
-
+        sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
+	ticknum++;
     }
 
     printf("Press ENTER to close port\n");
