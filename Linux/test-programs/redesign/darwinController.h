@@ -105,8 +105,6 @@ class DarwinController {
         int Set_Pos_Data(uint16_t* data);
         void Update_Motors();
 
-        void foo();
-
 
 
 };

@@ -69,10 +69,10 @@ DarwinController::DarwinController(){
     //initialize JointData struct:
 
     for(int i = 0; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    ji.flags = 0;
-        ji.goal = -9999;
-        ji.p = 0x32;
+        JointData& ji = joints[i];
+        ji.flags = 0;
+        ji.goal = -9999; //TODO: SET TO SOMETHING SAFER
+        ji.p = 0x05;     //TODO SET TO SOMETHING SAFER????
         ji.i = 0;
         ji.d = 0;
     }
@@ -913,7 +913,6 @@ void DarwinController::Update_Motors(){
 
     // If any of Goals changed but none of the PIDs changed
     if (change_flags == FLAG_GOAL_CHANGED){  
-      printf("Only goals changed\n");
         lenparam = 2;
         inst = 0x1E; //starting address for goal position Low
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
@@ -955,7 +954,6 @@ void DarwinController::Update_Motors(){
 
     // If both PID and Goal have changed
     else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ 
-      printf("Both goals and gains changed\n");
         lenparam = 6;
         inst = 0x1A; //starting address for pid gains
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
@@ -983,33 +981,35 @@ void DarwinController::Update_Motors(){
     }
 }
 
-void DarwinController::foo() {
-    for(int i = 0; i<NUM_JOINTS+1; i++){
-    JointData& ji = joints[i];
-    ji.flags = 0;
-        ji.goal = 2048;
-        ji.p = 0x32;
-        ji.i = 0;
-        ji.d = 0;
-    }
+//sample usage of joint data structure. take out of darwinController later.
 
-    uint8_t enables[20] = {0, };
-    uint8_t pgains[20] = {0, };
-    uint8_t igains[20] = {0, };
-    uint8_t dgains[20] = {0, };
-    uint16_t goalpos[20] = {2048, };
+// void DarwinController::foo() {
+//     for(int i = 0; i<NUM_JOINTS+1; i++){
+//     JointData& ji = joints[i];
+//     ji.flags = 0;
+//         ji.goal = 2048;
+//         ji.p = 0x32;
+//         ji.i = 0;
+//         ji.d = 0;
+//     }
+
+//     uint8_t enables[20] = {0, };
+//     uint8_t pgains[20] = {0, };
+//     uint8_t igains[20] = {0, };
+//     uint8_t dgains[20] = {0, };
+//     uint16_t goalpos[20] = {2048, };
 
 
-    Set_Enables(enables);
-    int poscount = Set_Pos_Data(goalpos);
-//    Set_P_Data(pgains);
-//    Set_I_Data(igains);
-//    Set_D_Data(dgains);
+//     Set_Enables(enables);
+//     int poscount = Set_Pos_Data(goalpos);
+// //    Set_P_Data(pgains);
+// //    Set_I_Data(igains);
+// //    Set_D_Data(dgains);
 
-    printf("positions: %d\n", poscount);
+//     printf("positions: %d\n", poscount);
 
-    Update_Motors();
-}
+//     Update_Motors();
+// }
 
 
 
