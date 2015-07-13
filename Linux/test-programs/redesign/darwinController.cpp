@@ -769,9 +769,11 @@ int DarwinController::Set_Torque_Enable(unsigned char joint_ID, unsigned char is
 // Index 0 of the array corresponds to the value for motor 1
 // Index 0 of JointData joints[] corresponds to motor 0 -> not in use.
 
+// TODO: Check for vaid input data array that is 20 long. 
+
 // 0 to disable motor and !0 to enable (or just pass in 1 to enable..)
 void DarwinController::Set_Enables(uint8_t* data){
-    for(int i=1; i<NUM_JOINTS; i++){
+    for(int i=1; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         if(data[i-1] == 0){
             ji.flags &= 0x7F; // MSB is enable data and the rest are ones so other flags are preserved
@@ -783,7 +785,7 @@ void DarwinController::Set_Enables(uint8_t* data){
 
 int DarwinController::Set_P_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS; i++){
+    for(int i=1; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.p != data[i-1])){
             ji.p = data[i-1];
@@ -796,7 +798,7 @@ int DarwinController::Set_P_Data(uint8_t* data){
 
 int DarwinController::Set_I_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS; i++){
+    for(int i=1; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.i != data[i-1])){
             ji.i = data[i-1];
@@ -809,7 +811,7 @@ int DarwinController::Set_I_Data(uint8_t* data){
 
 int DarwinController::Set_D_Data(uint8_t* data){
     int counter = 0;
-    for(int i=1; i<NUM_JOINTS; i++){
+    for(int i=1; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         if((ji.flags & FLAG_ENABLE) && (ji.d != data[i-1])){
             ji.d = data[i-1];
@@ -822,10 +824,10 @@ int DarwinController::Set_D_Data(uint8_t* data){
 
 int DarwinController::Set_Pos_Data(uint16_t* data){
     int counter = 0;
+
     for(int i=1; i<NUM_JOINTS+1; i++){
-      printf("In setposdata %d: %d     ",i, data[i-1]);
-      printf("flags & enable: %d", (joints[i].flags & FLAG_ENABLE));
-      printf("goal != data: %d\n", (joints[i].goal != data[i-1]));
+      printf("In setposdata %d:   flags: %d ", i, (joints[i].flags & FLAG_ENABLE));
+      printf("goal!=data: %d ", (joints[i].goal != data[i-1]));
 
 
         JointData& ji = joints[i];
@@ -834,6 +836,7 @@ int DarwinController::Set_Pos_Data(uint16_t* data){
             ji.flags |= FLAG_GOAL_CHANGED;
                 counter ++;
         }
+	printf("new goal: %d\n", ji.goal);
     }
     return counter;
 }
@@ -880,7 +883,7 @@ void DarwinController::Update_Motors(){
     uint8_t change_flags = 0;
 
     // figure out how many packets and what data gets sent
-    for (int i=0; i<NUM_JOINTS+1; ++i) {
+    for (int i=1; i<NUM_JOINTS+1; ++i) {
         const JointData& ji = joints[i];
 
         // pick off top bit to see if joint enabled
@@ -911,7 +914,7 @@ void DarwinController::Update_Motors(){
     // If any of Goals changed but none of the PIDs changed
     if (change_flags == FLAG_GOAL_CHANGED){  
         lenparam = 2;
-        inst = 0x1E;
+        inst = 0x1E; //starting address for goal position Low
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
 
@@ -931,7 +934,7 @@ void DarwinController::Update_Motors(){
      // If any of the gains changed but none of the Goals changed
     else if (change_flags == FLAG_GAINS_CHANGED){
         lenparam = 3;
-        inst = 0x1A;
+        inst = 0x1A; // starting address for pid gains
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
 
@@ -952,7 +955,7 @@ void DarwinController::Update_Motors(){
     // If both PID and Goal have changed
     else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ 
         lenparam = 6;
-        inst = 0x1A;
+        inst = 0x1A; //starting address for pid gains
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
             JointData& ji = joints[i];
 
