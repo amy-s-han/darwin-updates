@@ -144,7 +144,9 @@ int main(int argc, char** argv){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
-
+    for(int i = 0; i < 20; i++){
+      pgains[i] = 5;
+    }
 
     darCon.Set_P_Data(pgains);
     darCon.Set_I_Data(igains);
@@ -194,6 +196,9 @@ int main(int argc, char** argv){
 
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
+
+    printf("returning now for safety\n");
+    return 0;
 
     //start playing
     if(!play.angles_rad.empty()){

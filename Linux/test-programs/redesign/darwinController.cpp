@@ -521,7 +521,7 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
     printf("In syncwrite len: %d\n", len);
 
     return ReadWrite(packet, rxpacket);
-    //return port.WritePort(packet, len+1);
+    //return port.WritePort(packet, len+1); /alt method
 
 }
 
@@ -836,7 +836,7 @@ int DarwinController::Set_Pos_Data(uint16_t* data){
             ji.flags |= FLAG_GOAL_CHANGED;
                 counter ++;
         }
-	printf("new goal: %d\n", ji.goal);
+	printf("new goal: %d, new flags: %d\n", ji.goal, ji.flags);
     }
     return counter;
 }
@@ -902,7 +902,7 @@ void DarwinController::Update_Motors(){
             packet_count += 1; 
         }
     }
-
+    
     // at this point can tell how many bytes per motor to send
     uint8_t buf[120] = {0, };
     int buf_offset = 0;
@@ -913,6 +913,7 @@ void DarwinController::Update_Motors(){
 
     // If any of Goals changed but none of the PIDs changed
     if (change_flags == FLAG_GOAL_CHANGED){  
+      printf("Only goals changed\n");
         lenparam = 2;
         inst = 0x1E; //starting address for goal position Low
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
@@ -954,6 +955,7 @@ void DarwinController::Update_Motors(){
 
     // If both PID and Goal have changed
     else if (change_flags == FLAG_GAINS_CHANGED + FLAG_GOAL_CHANGED){ 
+      printf("Both goals and gains changed\n");
         lenparam = 6;
         inst = 0x1A; //starting address for pid gains
         for (int i=0; i<NUM_JOINTS+1; ++i) {   
