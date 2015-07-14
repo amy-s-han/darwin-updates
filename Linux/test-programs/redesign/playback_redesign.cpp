@@ -202,6 +202,7 @@ int main(int argc, char** argv){
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
 
+
     // TODO: set speed to something more reasonable?
     if(!darCon.SetAllJointSpeeds(0x00, 0x80)){
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
@@ -224,8 +225,6 @@ int main(int argc, char** argv){
 
     // First time Controller + Comm portion. 
     
-    
-   
 
     //int ticknum = 1;
     while(play.isPlaying){
@@ -249,7 +248,7 @@ int main(int argc, char** argv){
             //set the m_Joint to reflect joint angles from the current time tick
            
             double cur_angle = play.angles_rad[play.offset_counter];
-	    printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
+            printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
 	    
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
@@ -278,11 +277,11 @@ int main(int argc, char** argv){
 
         printf("Press Enter to start Timing next round\n");
         getchar();
+        
     }
 
     printf("Press ENTER to close port\n");
     getchar();
 
     darCon.ClosePort();
-
 }

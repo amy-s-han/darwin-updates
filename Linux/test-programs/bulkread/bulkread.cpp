@@ -115,14 +115,14 @@ bool Ping(int id, int *error, Port *port) {
     return result;
 }
 
-void bulkread(Port *port){
+void bulkread(Port *port, unsigned char info[]){
 
     // [0xFF, 0xFF, ID, LENGTH, INSTRUCTION/ERRBIT, PARAMETER, ...]
     // m_BulkReadTxPacket[0xFF, 0xFF, 0xFE, LENGTH, 0x92, 0x0, 
 
     // make bulkread packet
+    int count = 0;
     int number = 0;
-
     unsigned char BulkReadTxPacket[MAXNUM_TXPARAM + 10] = {0, };
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 
@@ -232,6 +232,7 @@ void bulkread(Port *port){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         port->BulkData[rxpacket[ID]].table[port->BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
 			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+                        info[count++] = rxpacket[PARAMETER + j];
                     }
 
                     port->BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
@@ -282,16 +283,42 @@ int main(int argc, char** argv){
         return 0;
     }
 
+    unsigned char info[MAXNUM_RXPARAM] = {0, };
+    for(int i = 0; i<MAXNUM_RXPARAM; i++)
+	info[i] = -99;
+
     //dxl power on stuff
     //(WriteByte(CM730::ID_CM, CM730::P_DXL_POWER, 1, 0)
 
     unsigned char dxltxpacket[] = {0xFF, 0xFF, 0xC8, 0x04, 0x03, 0x18, 0x01, 0};
     dxltxpacket[7] = CalculateChecksum(dxltxpacket);
     port->WritePort(dxltxpacket, 8);
-
     printf("Finshed dxl power up. Press enter\n");
     getchar();
-
-    bulkread(port);
-      
+    int buf = 30;
+    bulkread(port, info);
+    for(int i = 0; i<20; i++){
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d ", info[buf++]);
+	printf("%d \n", info[buf++]);}
 }
