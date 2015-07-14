@@ -87,14 +87,7 @@ enum{
 	BULK_READ		=146,
 };
 
-enum{
-	/* already defined above???
-	MODEL_NUMBER_L		= 0,
-	MODEL_NUMBER_H		= 1,
-	VERSION				= 2,
-	P_ID				= 3,
-	BAUD_RATE			= 4,
-	RETURN_DELAY_TIME	= 5, */			
+enum{		
 	RETURN_LEVEL		= 16,
 	DXL_POWER			= 24,
 	LED_PANNEL			= 25,
@@ -177,9 +170,6 @@ class Port {
 		void ClearPort();
 		int WritePort(unsigned char* packet, int numPacket);
 		int ReadPort(unsigned char* packet, int numPacket);
-		
-
-		//read word, read byte, write word, write byte?????
 
 };
 

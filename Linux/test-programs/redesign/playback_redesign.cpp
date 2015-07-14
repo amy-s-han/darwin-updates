@@ -204,7 +204,16 @@ int main(int argc, char** argv){
 
 
     // TODO: set speed to something more reasonable?
-    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){
+
+    // Moving Speed
+
+    // It is a moving speed to Goal Position.
+    // 0~1023 (0X3FF) can be used, and the unit is about 0.053rpm.
+    // If it is set to 0, it means the maximum rpm of the motor is used without controlling the speed.
+    // If it is 1023, it is about 54rpm.
+    // For example, if it is set to 300, it is about 15.82 rpm.
+
+    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){ 
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
@@ -221,6 +230,7 @@ int main(int argc, char** argv){
     // array to store all the times. 
     int numTicks = play.angles_rad.size() / ALT_NUM_JOINTS;
     printf("numTicks from calculation: %d\n", numTicks);
+    printf("numticks from play.nticks: %d\n", play.nticks);
     double times[numTicks+ALT_NUM_JOINTS];
 
 
@@ -278,7 +288,7 @@ int main(int argc, char** argv){
         printf("TimePassed: %f\n", TimePassed);
         times[ticknum] = TimePassed; 
 
-        sleep(1); //sleep 8ms before next time tick -> still worried about this.
+        sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
 	    ticknum++;
 
     }
@@ -295,7 +305,7 @@ int main(int argc, char** argv){
     }
 
     double avgTime = sum / ticknum;
-    printf("AVGTIME: %f\n", avgTime);
+    printf("\n\nAVGTIME: %f\n", avgTime);
 
     printf("Press ENTER to close port\n");
     getchar();

@@ -40,9 +40,6 @@ bool Port::OpenPort(const char* name)
         return false;
     }
 
-	
-	printf("success!\n");
-
 	// You must set 38400bps!
 	memset(&newtio, 0, sizeof(newtio));
     newtio.c_cflag      = B38400|CS8|CLOCAL|CREAD;
@@ -74,12 +71,12 @@ bool Port::OpenPort(const char* name)
         return false;
 	}
 
-	printf("success!\n");
-
 	tcflush(m_Socket_fd, TCIFLUSH);
 
     m_ByteTransferTime = (1000.0 / baudrate) * 12.0;
 	
+    printf("Open port success!\n");
+
     return true;
 
 }
