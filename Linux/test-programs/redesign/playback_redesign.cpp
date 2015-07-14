@@ -208,9 +208,6 @@ int main(int argc, char** argv){
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
-    printf("Press Enter to start playback\n");
-    getchar();
-
 
     //start playing
     if(!play.angles_rad.empty()){
@@ -227,6 +224,10 @@ int main(int argc, char** argv){
     double times[numTicks+ALT_NUM_JOINTS];
 
 
+
+    printf("Press Enter to start playback\n");
+    getchar();
+    
     // First time Controller + Comm portion. 
     
 
@@ -277,19 +278,19 @@ int main(int argc, char** argv){
         printf("TimePassed: %f\n", TimePassed);
         times[ticknum] = TimePassed; 
 
-        sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
+        sleep(1); //sleep 8ms before next time tick -> still worried about this.
 	    ticknum++;
-
-        printf("Press Enter to start Timing next round\n");
 
     }
 
-    printf("TICK NUMBER: %d\n ", ticknum);
+    printf("TICK NUMBER: %d\n . Press Enter to continue", ticknum);
+
+    getchar();
 
     double sum = 0;
 
     for(int i = 0; i < ticknum; i++){
-        printf("i: %f  || ", times[i]);
+        printf("%d: %f  || ", i, times[i]);
         sum += times[i];
     }
 
