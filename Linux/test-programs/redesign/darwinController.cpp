@@ -59,6 +59,43 @@ int BulkReadData::MakeWord(int lowbyte, int highbyte){
     return (int)word;
 }
 
+//Timing class:
+
+Timing::Timing(){}
+Timing::~Timing(){}
+
+double Timing::getCurrentTime(){
+    gettimeofday(&tv, NULL);
+
+    return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
+}
+
+//TODO: investigate return value's units
+double Timing::TimePassed(double StartTime){
+    double time;
+    time = getCurrentTime() - StartTime;
+    if(time < 0.0){
+        printf("error\n");
+    }
+
+    return time;
+}
+
+bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
+    double time;
+    time = getCurrentTime() - packetStartTime;
+    if(time < 0.0){
+        printf("error\n");
+        //need to set packet start time to getCurrentTime();
+    }
+
+    if(time > packetWaitTime){
+        return true;
+    }
+
+    return false;
+}
+
 
 DarwinController::DarwinController(){
      // create bulk read data structure
@@ -202,47 +239,6 @@ bool DarwinController::InitToPose(){
     return true;
 }
 
-unsigned char DarwinController::CalculateChecksum(unsigned char *packet)
-{
-    unsigned char checksum = 0x00;
-    for(int i=2; i<packet[LENGTH]+3; i++ )
-        checksum += packet[i];
-    return (~checksum);
-}
-
-double DarwinController::getCurrentTime(){
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-    return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
-}
-
-bool DarwinController::isTimeOut(double packetStartTime, double packetWaitTime){
-    double time;
-    time = getCurrentTime() - packetStartTime;
-    if(time < 0.0){
-        printf("error\n");
-        //need to set packet start time to getCurrentTime();
-    }
-
-    if(time > packetWaitTime){
-        return true;
-    }
-
-    return false;
-}
-
-int DarwinController::GetLowByte(int word){
-    unsigned short temp;
-    temp = word & 0xff;
-    return (int)temp;
-}
-
-int DarwinController::GetHighByte(int word){
-    unsigned short temp;
-    temp = word & 0xff00;
-    return (int)(temp >> 8);
-}
 
 void DarwinController::MakeBulkPacket(unsigned char *BulkReadTxPacket){
 
@@ -370,7 +366,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
         
         printf("getlength: %d, tolength: %d\n", get_length, to_length);
         // set packet time out:
-        double packetStartTime = getCurrentTime();
+        double packetStartTime = Time.getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
 
         while(1){ // loop for receiving packet
@@ -405,7 +401,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 port.ClearPort();
                 port.WritePort(txpacket, length);
             }  else { //check time out status
-                if(isTimeOut(packetStartTime, packetWaitTime)){
+                if(Time.isTimeOut(packetStartTime, packetWaitTime)){
                     if(get_length == 0){
                         //printf("timed out\n");
                     } else {
@@ -414,7 +410,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     if(txpacket[INSTRUCTION] != BULK_READ){
                         fail_counter++;
                         get_length = 0;
-                        packetStartTime = getCurrentTime();
+                        packetStartTime = Time.getCurrentTime();
                         port.ClearPort();
                         port.WritePort(txpacket, length);
                     }
@@ -434,6 +430,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
         int return_length = get_length;
 
+        // TODO: TIMEOUT CHECK FOR BULKREAD!!!
         while(1){ // this loop is purely for bulkread
             int i;
             for(i = 0; i< get_length - 1; i++){
@@ -629,15 +626,6 @@ int DarwinController::ReadWord(int id, int address, int *word){
     return result;
 }
 
-int DarwinController::MakeWord(int lowbyte, int highbyte){
-    unsigned short word;
-
-    word = highbyte;
-    word = word << 8;
-    word = word + lowbyte;
-
-    return (int)word;
-}
 
 bool DarwinController::Ping(int id, int *error){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
@@ -661,6 +649,38 @@ bool DarwinController::Ping(int id, int *error){
     }
 }
 
+
+unsigned char DarwinController::CalculateChecksum(unsigned char *packet)
+{
+    unsigned char checksum = 0x00;
+    for(int i=2; i<packet[LENGTH]+3; i++ )
+        checksum += packet[i];
+    return (~checksum);
+}
+
+int DarwinController::GetLowByte(int word){
+    unsigned short temp;
+    temp = word & 0xff;
+    return (int)temp;
+}
+
+int DarwinController::GetHighByte(int word){
+    unsigned short temp;
+    temp = word & 0xff00;
+    return (int)(temp >> 8);
+}
+
+
+int DarwinController::MakeWord(int lowbyte, int highbyte){
+    unsigned short word;
+
+    word = highbyte;
+    word = word << 8;
+    word = word + lowbyte;
+
+    return (int)word;
+}
+
 /******************************************************
  * Converts 255 value rgb values into a 2 byte color  *
  * Useful for Head (0x1A) and Eye (0x1C) LEDs         *
@@ -673,13 +693,12 @@ int DarwinController::MakeColor(int red, int green, int blue){
     return (int)(((b>>3)<<10)|((g>>3)<<5)|(r>>3));
 }
 
-//int or float or double???
 double DarwinController::Ticks2DegAngle(int ticks){
-    if(ticks == 0){
+    if(ticks == 2048){
         return 0.0;
     }
 
-    return ticks / (4096/360);
+    return (ticks - 2048) / (4096/360);
 }
 
 int DarwinController::DegAngle2Ticks(double angle){
@@ -688,16 +707,18 @@ int DarwinController::DegAngle2Ticks(double angle){
 }
 
 double DarwinController::Ticks2RadAngle(int ticks){
-    if(ticks == 0){
+    if(ticks == 2048){
         return 0.0;
     }
 
-    return ticks / (4096 / (2*M_PI));
+    return (ticks - 2048) / (4096 / (2*M_PI));
 }
 
 int DarwinController::RadAngle2Ticks(double angle){
     return (int)(2048 + angle * (4096 / (2*M_PI)));
 }
+
+// The following are individual motor instructions:
 
 // Converts an angle given in degrees into motor ticks and sends write packet to motor 
 int DarwinController::SetJointAngle(unsigned char joint_ID, int goal_angle){
@@ -755,6 +776,50 @@ int DarwinController::Set_Torque_Enable(unsigned char joint_ID, unsigned char is
     return ReadWrite(Torque_packet, rxpacket);
 }
 
+// The following is for syncwriting a set of conditions:
+
+// TODO: Figure out range of reasonable speeds!
+bool DarwinController::SetAllJointSpeeds(int speed){
+
+    unsigned char speedTxPacket[MAXNUM_TXPARAM];
+    unsigned char speedParams[60]; // 3 params each for 20 motors
+
+    unsigned char lowbyte = GetLowByte(speed);
+    unsigned char highbyte = GetHighByte(speed);
+
+    for(int i = 0; i < NUM_JOINTS; i++){
+        speedParams[3*i] = i+1;
+        speedParams[3*i+1] = lowbyte;
+        speedParams[3*i+2] = highbyte;
+    }
+
+    int result = SyncWrite(speedTxPacket, 0x20, speedParams, 60, 2);
+
+    if(result == 68){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool DarwinController::SetAllJointSpeeds(unsigned char highbyte, unsigned char lowbyte){
+    unsigned char speedTxPacket[MAXNUM_TXPARAM];
+    unsigned char speedParams[60]; // 3 params each for 20 motors
+
+    for(int i = 0; i < NUM_JOINTS; i++){
+        speedParams[3*i] = i+1;
+        speedParams[3*i+1] = lowbyte;
+        speedParams[3*i+2] = highbyte;
+    }
+
+    int result = SyncWrite(speedTxPacket, 0x20, speedParams, 60, 2);
+
+    if(result == 68){
+        return true;
+    } else {
+        return false;
+    }
+}
 
 //for JointData struct
 

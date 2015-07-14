@@ -124,18 +124,12 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    // temp set speed -> seriously consider keeping this???
-
-    unsigned char speedTxPacket[MAXNUM_TXPARAM];
-    unsigned char speedParams[60]; // 3 params each for 20 motors
-
-    for(int i = 0; i < NUM_JOINTS; i++){
-        speedParams[3*i] = i+1;
-        speedParams[3*i+1] = 0x40;
-        speedParams[3*i+2] = 0x00;
+    // set speed 
+    if (!darCon.SetAllJointSpeeds(0x00, 0x40)){
+        cerr << "Failed to set speed\n";
+        return 1;
     }
 
-    int speed_syncwrite_result = darCon.SyncWrite(speedTxPacket, 0x20, speedParams, 60, 2);
 
     printf("NUM_JOINTS: %d and ALT_NUM_JOINTS: %d\n\n", NUM_JOINTS, ALT_NUM_JOINTS);
 
@@ -152,8 +146,7 @@ int main(int argc, char** argv){
     darCon.Set_Enables(enables);
 
 
-    // reset speed or gains?
-
+    // set gains for now
 
     uint8_t pgains[20] = {0, };
     uint8_t igains[20] = {0, };
@@ -209,16 +202,39 @@ int main(int argc, char** argv){
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
 
+    // TODO: set speed to something more reasonable?
+    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){
+        printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
+    }
+
+    printf("Press Enter to start playback\n");
+    getchar();
+
+
     //start playing
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
     }
     
-    int ticknum = 1;
+    // Implement timing struct for clock_nanosleep
+
+    // Start timing!
+
+    double TimePassed;
+
+    // First time Controller + Comm portion. 
+    
+    
+   
+
+    //int ticknum = 1;
     while(play.isPlaying){
-      //      printf("Press enter for tick %d\n", ticknum + 1);
-      //      getchar();
-      printf("Tick: %d\n", ticknum+1);
+
+        double StartTime = darCon.Time.getCurrentTime();
+
+        // printf("Press enter for tick %d\n", ticknum + 1);
+        // getchar();
+        // printf("Tick: %d\n", ticknum+1);
 
         //put trajectory data into jointData
 
@@ -231,8 +247,7 @@ int main(int argc, char** argv){
 
 
             //set the m_Joint to reflect joint angles from the current time tick
-            // note motor indices start at 1, so need to add i+1 for motor_number
-
+           
             double cur_angle = play.angles_rad[play.offset_counter];
 	    printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
 	    
@@ -253,8 +268,16 @@ int main(int argc, char** argv){
         //updateMotors to write out all changes. 
         darCon.Update_Motors();
 
+        TimePassed = darCon.Time.TimePassed(StartTime);
+
+        printf("StartTime: %f\n", StartTime);
+        printf("TimePassed: %f\n", TimePassed);
+
         sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
-	ticknum++;
+	    //ticknum++;
+
+        printf("Press Enter to start Timing next round\n");
+        getchar();
     }
 
     printf("Press ENTER to close port\n");

@@ -3,8 +3,14 @@
 
 #include <stdint.h>
 
-
 #include "CM730.h"
+
+struct JointData {
+        uint8_t  flags;
+        uint16_t goal;
+        uint8_t p, i, d;
+};
+
 
 class BulkReadData {
     public:
@@ -22,22 +28,31 @@ class BulkReadData {
 
 };
 
-struct JointData {
-        uint8_t  flags;
-        uint16_t goal;
-        uint8_t p, i, d;
-};
+class Timing {
+    private:
+        struct timeval tv;
 
+    public:
+        Timing();
+        ~Timing();
+
+        double getCurrentTime();
+        double TimePassed(double StartTime);
+        bool isTimeOut(double packetStartTime, double packetWaitTime);
+
+};
 
 class DarwinController {
     private:
 
     public: 
         Port port;
-        
-            JointData joints[NUM_JOINTS];
 
-        BulkReadData BulkData[ID_BROADCAST]; //254
+        Timing Time;
+        
+        JointData joints[NUM_JOINTS+1];
+
+        BulkReadData BulkData[ID_BROADCAST]; //ID_BROADCAST = 254
         unsigned char BulkReadTxPacket[266];
 
         DarwinController();
@@ -48,12 +63,6 @@ class DarwinController {
         void ClosePort();
 
         bool InitToPose();
-
-        unsigned char CalculateChecksum(unsigned char *packet);
-        double getCurrentTime();
-        bool isTimeOut(double packetStartTime, double packetWaitTime);
-        int GetLowByte(int word);
-        int GetHighByte(int word);
 
         void MakeBulkPacket(unsigned char *BulkReadTxPacket);
 
@@ -70,15 +79,22 @@ class DarwinController {
         int ReadByte(int id, int address, int *word);
         int ReadWord(int id, int address, int *word);
 
-        int MakeWord(int lowbyte, int highbyte);
         bool Ping(int id, int *error);
+
+
+        unsigned char CalculateChecksum(unsigned char *packet);
+        int MakeWord(int lowbyte, int highbyte);
+        int GetLowByte(int word);
+        int GetHighByte(int word);
         int MakeColor(int red, int green, int blue);
+        
 
         double Ticks2DegAngle(int ticks);
         int DegAngle2Ticks(double angle);
         double Ticks2RadAngle(int ticks);
         int RadAngle2Ticks(double angle);
 
+        // these set individual motors
         int SetJointAngle(unsigned char joint_ID, int goal_angle);
         int SetMoveSpeed(unsigned char joint_ID, int move_speed);
         int Set_P_Gain(unsigned char joint_ID, unsigned char P_Value);
@@ -88,12 +104,17 @@ class DarwinController {
         int Set_Torque_Enable(unsigned char joint_ID, unsigned char is_enabled);
 
 
+        // These syncwrite a group of instructions to all motors
+        bool SetAllJointSpeeds(int speed);
+        bool SetAllJointSpeeds(unsigned char highbyte, unsigned char lowbyte);
+
         // For JointData struct
         // These set values for all motors and require and input array of 20
         void Set_Enables(uint8_t* data);
         int Set_P_Data(uint8_t* data);
         int Set_I_Data(uint8_t* data);
         int Set_D_Data(uint8_t* data);
+        int Set_Pos_Data(uint16_t* data);
 
         // These set individual motor values
         void Set_Enables(unsigned char motor_ID, uint8_t value);
@@ -102,7 +123,6 @@ class DarwinController {
         void Set_D_Data(unsigned char motor_ID, uint8_t value);
         int Set_Pos_Data(unsigned char motor_ID, uint16_t value);
 
-        int Set_Pos_Data(uint16_t* data);
         void Update_Motors();
 
 
