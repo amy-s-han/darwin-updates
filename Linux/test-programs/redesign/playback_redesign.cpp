@@ -145,7 +145,6 @@ int main(int argc, char** argv){
 
     darCon.Set_Enables(enables);
 
-
     // set gains for now
 
     uint8_t pgains[20] = {0, };
@@ -185,14 +184,6 @@ int main(int argc, char** argv){
 
     printf("Finished loading first tick\n");
 
-    for(int i = 0; i < ALT_NUM_JOINTS; i++){
-        printf("goal %d: %d\n", i, goalpos[i]);
-    }
-
-    printf("Press enter to Set_Pos_Data\n");
-    getchar();
-
-
     int poscount = darCon.Set_Pos_Data(goalpos);
     printf("poscount: %d\n", poscount);
 
@@ -228,10 +219,7 @@ int main(int argc, char** argv){
     double TimePassed;
 
     // array to store all the times. 
-    int numTicks = play.angles_rad.size() / ALT_NUM_JOINTS;
-    printf("numTicks from calculation: %d\n", numTicks);
-    printf("numticks from play.nticks: %d\n", play.nticks);
-    double times[numTicks+ALT_NUM_JOINTS];
+    double times[play.nticks+play.njoints];
 
 
 
@@ -240,7 +228,6 @@ int main(int argc, char** argv){
 
     // First time Controller + Comm portion. 
     
-
     int ticknum = 0;
     while(play.isPlaying){
 
@@ -289,22 +276,23 @@ int main(int argc, char** argv){
         times[ticknum] = TimePassed; 
 
         sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
-	    ticknum++;
+	   
+        ticknum ++;
 
     }
 
-    printf("TICK NUMBER: %d\n . Press Enter to continue", ticknum);
+    printf("TICK NUMBER: %d\n . Press Enter to continue", (int)play.nticks);
 
     getchar();
 
     double sum = 0;
 
-    for(int i = 0; i < ticknum; i++){
+    for(int i = 0; i < (int)play.nticks; i++){
         printf("%d: %f  || ", i, times[i]);
         sum += times[i];
     }
 
-    double avgTime = sum / ticknum;
+    double avgTime = sum / (int)play.nticks;
     printf("\n\nAVGTIME: %f\n", avgTime);
 
     printf("Press ENTER to close port\n");
