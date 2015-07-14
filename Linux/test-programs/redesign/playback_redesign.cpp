@@ -293,6 +293,9 @@ int main(int argc, char** argv){
         sum += times[i];
     }
 
+    double avgTime = sum / ticknum;
+    printf("AVGTIME: %f\n", avgTime);
+
     printf("Press ENTER to close port\n");
     getchar();
 
