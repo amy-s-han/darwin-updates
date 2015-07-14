@@ -219,17 +219,21 @@ int main(int argc, char** argv){
     
     // Implement timing struct for clock_nanosleep
 
-    // Start timing!
-
     double TimePassed;
+
+    // array to store all the times. 
+    int numTicks = play.angles_rad.size() / ALT_NUM_JOINTS;
+    printf("numTicks from calculation: %d\n", numTicks);
+    double times[numTicks+ALT_NUM_JOINTS];
+
 
     // First time Controller + Comm portion. 
     
 
-    //int ticknum = 1;
+    int ticknum = 0;
     while(play.isPlaying){
 
-        double StartTime = darCon.Time.getCurrentTime();
+        double StartTime = darCon.Time.getCurrentTime(); // Start timing!
 
         // printf("Press enter for tick %d\n", ticknum + 1);
         // getchar();
@@ -271,13 +275,22 @@ int main(int argc, char** argv){
 
         printf("StartTime: %f\n", StartTime);
         printf("TimePassed: %f\n", TimePassed);
+        times[ticknum] = TimePassed; 
 
         sleep(0.8); //sleep 8ms before next time tick -> still worried about this.
-	    //ticknum++;
+	    ticknum++;
 
         printf("Press Enter to start Timing next round\n");
-        getchar();
-        
+
+    }
+
+    printf("TICK NUMBER: %d\n ", ticknum);
+
+    double sum = 0;
+
+    for(int i = 0; i < ticknum; i++){
+        printf("i: %f  || ", times[i]);
+        sum += times[i];
     }
 
     printf("Press ENTER to close port\n");

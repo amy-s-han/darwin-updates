@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <time.h>
 #include <stdint.h>
 
 #include <inttypes.h> //for debugging: 
@@ -64,13 +65,15 @@ int BulkReadData::MakeWord(int lowbyte, int highbyte){
 Timing::Timing(){}
 Timing::~Timing(){}
 
+// Return: current time in miliseconds
 double Timing::getCurrentTime(){
     gettimeofday(&tv, NULL);
 
+    // I think this returns miliseconds 
     return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
 }
 
-//TODO: investigate return value's units
+// Returns time passed in miliseconds
 double Timing::TimePassed(double StartTime){
     double time;
     time = getCurrentTime() - StartTime;
@@ -80,6 +83,7 @@ double Timing::TimePassed(double StartTime){
 
     return time;
 }
+
 
 bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
     double time;
@@ -94,6 +98,27 @@ bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
     }
 
     return false;
+}
+
+// calculates the wake up time
+void Timing::IncrementTime(struct timespec *LoopTime, double PeriodSec){
+    LoopTime->tv_nsec += PeriodSec * 1e9;
+
+    if(LoopTime->tv_nsec > 1000000000L){
+        LoopTime->tv_sec += LoopTime->tv_nsec / 1000000000L;
+        LoopTime->tv_nsec = LoopTime->tv_nsec % 1000000000L;
+    }
+}
+
+// Return: False if woken up before wake time
+bool Timing::LoopTimeControl(struct timespec *LoopTime){
+    
+    if(clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, LoopTime, NULL) == 0){
+        return true;
+    } else {
+        return false;
+    }
+
 }
 
 
@@ -537,6 +562,7 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
 }
 
 int DarwinController::BulkRead(unsigned char *rxpacket){
+
     return ReadWrite(BulkReadTxPacket, rxpacket);
 }
 

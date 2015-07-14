@@ -39,6 +39,9 @@ class Timing {
         double getCurrentTime();
         double TimePassed(double StartTime);
         bool isTimeOut(double packetStartTime, double packetWaitTime);
+        void IncrementTime(struct timespec *LoopTime, double PeriodSec);
+        bool LoopTimeControl(struct timespec *LoopTime);
+
 
 };
 
