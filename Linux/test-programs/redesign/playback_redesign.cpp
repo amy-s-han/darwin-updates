@@ -227,7 +227,7 @@ int main(int argc, char** argv){
 
     printf("Press Enter to start playback\n");
     getchar();
-    
+
     // First time Controller + Comm portion. 
     
 
@@ -253,7 +253,7 @@ int main(int argc, char** argv){
             //set the m_Joint to reflect joint angles from the current time tick
            
             double cur_angle = play.angles_rad[play.offset_counter];
-            printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
+            //printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
 	    
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
