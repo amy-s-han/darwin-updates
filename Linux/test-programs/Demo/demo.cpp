@@ -9,13 +9,18 @@
 
 using namespace std;
 
+#define PGAIN (0xF0)
+#define IGAIN (0)
+#define DGAIN (0)
+
+
 #define LENGTH (3)
 #define PARAMETER (5)
 #define MAXNUM_TXPARAM (256)
 #define MAXNUM_RXPARAM (1024)
 #define BULK_READ (146)
 #define READ (0)
-#define WRITE (0)
+#define WRITE (1)
 #define EYES (0)
 #define motor_LED (0)
 #define REGWRITE (0)
@@ -220,7 +225,7 @@ int Init_to_Pose(Port* port){
     port->ClearPort();
     port->WritePort(initpacket, 9);
     sleep(1);
-    
+
     // Green means go
     color = MakeColor(0, 255, 0); 
     initpacket[6] = GetLowByte(color);
@@ -230,6 +235,18 @@ int Init_to_Pose(Port* port){
     port->WritePort(initpacket, 9);
     usleep(2000);   
   
+    // Make move speeds zero again?
+    for(int z = 0; z < 20; z++){
+	initparams[3*z] = 0x00;
+	initparams[3*z+1] = 0x00;
+        initparams[3*z+2] = 0x00;
+    }
+
+    SyncWrite(initpacket, 0x20, initparams, 60, 2);
+    usleep(2000);
+    port->ClearPort();
+    port->WritePort(initpacket, 68);
+
     return temp;
 /*
     for(int z = 0; z < 20; z++){
@@ -509,39 +526,23 @@ int main(int argc, char** argv){
     getchar();   
   
     unsigned char packet[100] = {0, };
+    usleep(2000);
+    unsigned char dip_params[3] = {DGAIN, IGAIN, PGAIN};
+    MakePacket(packet, 0x05, 3, 0x03, 0x1A, dip_params);
+    port->ClearPort();
+    port->WritePort(packet, 10);
+    usleep(2000);
 
-    int p_word;
-    int i_word;
-    int d_word;
-
-    unsigned char joint = 20;
-
-    p_word = ReadWord(port, joint, 0x1A);
-    i_word = ReadWord(port, joint, 0x1B);
-    d_word = ReadWord(port, joint, 0x1C);
-
-    printf("p gain is: %d\n", GetLowByte(p_word));
-    printf("i gain is: %d\n", GetLowByte(i_word));
-    printf("d gain is: %d\n", GetLowByte(d_word));
-
-    JointData joints[21];
-    foo(port, joints);
-    
-    usleep(5000);
-    p_word = ReadWord(port, joint, 0x1A);
-    i_word = ReadWord(port, joint, 0x1B);
-    d_word = ReadWord(port, joint, 0x1C);
-
-    printf("p gain is: %d\n", GetLowByte(p_word));
-    printf("i gain is: %d\n", GetLowByte(i_word));
-    printf("d gain is: %d\n", GetLowByte(d_word));
+    int gainread = 0;
+    gainread = ReadWord(port, 0x05, 0x1B);
+    int iread = GetLowByte(gainread);
+    int pread = GetHighByte(gainread);
+    printf("i gain: %d\n", iread);
+    printf("p gain: %d\n", pread);
 
 if(EYES){
     int color = MakeColor(230, 0, 230);
     
-    // May want to put the cycling through colors back in
-    // for a cool demo.
-
     // LED packet
     packet[0] = 0xFF;
     packet[1] = 0xFF;
@@ -652,6 +653,7 @@ if(WRITE){
     while(1){
 
         packet[2] = 0x05;
+        packet[3] = 0x05;
         packet[5] = 0x1E;
         packet[6] = 0xD0;
         packet[7] = 0x07;
@@ -660,9 +662,9 @@ if(WRITE){
         port->WritePort(packet, 9);
         usleep(2000);
 
-        sleep(1);
+        sleep(2);
 
-        angle = ReadWord(port, 0x6, 0x24);
+        angle = ReadWord(port, 0x5, 0x24);
         printf("Angle is: %d", angle);
         if(getchar() == 'a')
 	    break;
@@ -673,9 +675,9 @@ if(WRITE){
         port->WritePort(packet, 9);
         usleep(2000);
 
-	sleep(1);
+	sleep(2);
 
-        angle = ReadWord(port, 0x06, 0x24);
+        angle = ReadWord(port, 0x05, 0x24);
         printf("Angle is: %d", angle);
         if(getchar() == 'a')
 	    break;
