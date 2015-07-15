@@ -208,7 +208,7 @@ int main(int argc, char** argv){
     // If it is 1023, it is about 54rpm.
     // For example, if it is set to 300, it is about 15.82 rpm.
 
-    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){ 
+    if(!darCon.SetAllJointSpeeds(0x00, 0x00)){ 
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
@@ -283,8 +283,8 @@ int main(int argc, char** argv){
 	   
         ticknum ++;
 
-        // darCon.Time.IncrementTime(&LoopTime, play.PeriodSec);
-        // darCon.LoopTimeControl(&LoopTime);
+         darCon.Time.IncrementTime(&LoopTime, play.PeriodSec);
+         darCon.Time.LoopTimeControl(&LoopTime);
 
     }
 
