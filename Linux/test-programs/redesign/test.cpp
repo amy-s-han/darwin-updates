@@ -39,6 +39,8 @@ int main(int argc, char** argv){
 	darCon.FinishPacket(txpacketread);
 
     int result = darCon.ReadWrite(txpacketread, rxpacket);
+
+    printf("Read result: %d\n", result);
     int word = 0;
 
 	if(result == 0){

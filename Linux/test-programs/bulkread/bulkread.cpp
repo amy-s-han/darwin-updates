@@ -203,7 +203,7 @@ void bulkread(Port *port, unsigned char info[]){
                     if(get_length == 0){
                         printf("timed out\n");
                     } else {
-                        printf("rxpacket corrupt\n");
+		      //printf("rxpacket corrupt\n");
                     }
                 }
             }
@@ -245,7 +245,7 @@ void bulkread(Port *port, unsigned char info[]){
                     get_length = to_length;
                     num--;
                 } else {
-                    printf("rx corrupt\n");
+		  //printf("rx corrupt\n");
                     for(int j = 0; j <= get_length - 2; j++){
                         rxpacket[j] = rxpacket[j+2];
                     }
@@ -256,7 +256,7 @@ void bulkread(Port *port, unsigned char info[]){
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
-                        printf("rx corrupt\n");
+		      // printf("rx corrupt\n");
                     }
                     break;
                 }
