@@ -9,9 +9,9 @@
 
 using namespace std;
 
-#define PGAIN (0xF0)
-#define IGAIN (0)
-#define DGAIN (0)
+#define PGAIN (0x18)
+#define IGAIN (0x8)
+#define DGAIN (0x00)
 
 
 #define LENGTH (3)
@@ -208,7 +208,7 @@ int Init_to_Pose(Port* port){
         initparams[5*z] = z+1;
         initparams[5*z+1] = 0x00;
         initparams[5*z+2] = 0x08;
-        initparams[5*z+3] = 0x40;
+        initparams[5*z+3] = 0x60;
         initparams[5*z+4] = 0x00;
     }
     SyncWrite(initpacket, 0x1E, initparams, 100, 4);
@@ -224,7 +224,7 @@ int Init_to_Pose(Port* port){
     MakePacket(initpacket, 0xC8, 2, 0x03, 0x1C, colorparams);
     port->ClearPort();
     port->WritePort(initpacket, 9);
-    sleep(1);
+    sleep(1.5);
 
     // Green means go
     color = MakeColor(0, 255, 0); 
@@ -235,9 +235,20 @@ int Init_to_Pose(Port* port){
     port->WritePort(initpacket, 9);
     usleep(2000);   
   
+    // Set P gains
+    for(int z = 0; z < 20; z++){
+	initparams[2*z] = z+1;
+        initparams[2*z+1] = 0x50;
+    }
+
+    SyncWrite(initpacket, 0x1C, initparams, 40, 1);
+    usleep(2000);
+    port->ClearPort();
+    port->WritePort(initpacket, 68);
+
     // Make move speeds zero again?
     for(int z = 0; z < 20; z++){
-	initparams[3*z] = 0x00;
+	initparams[3*z] = z+1;
 	initparams[3*z+1] = 0x00;
         initparams[3*z+2] = 0x00;
     }
