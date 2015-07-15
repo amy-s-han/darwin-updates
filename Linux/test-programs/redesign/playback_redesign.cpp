@@ -176,23 +176,27 @@ int main(int argc, char** argv){
     //Load first time tick into Joint Data
     uint16_t goalpos[20];
 
+    double StartTime = darCon.Time.getCurrentTime(); // Start timing!
+
     for(int i = 0; i < ALT_NUM_JOINTS; i++){
-      //printf("In for loop: %d\n", i);
-      //printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
-      
+        //printf("In for loop: %d\n", i);
+        //printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
+
         double cur_angle = play.angles_rad[play.offset_counter];
-    //printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
+        //printf("cur_angle in ticks: %d\n", darCon.RadAngle2Ticks(cur_angle));
         goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
         play.offset_counter++;
     }
 
-    printf("Finished loading first tick\n");
-
     int poscount = darCon.Set_Pos_Data(goalpos);
-    printf("poscount: %d\n", poscount);
 
     // initialize to first tick
     darCon.Update_Motors();
+
+
+    double initTimePass = darCon.Time.TimePassed(StartTime);
+
+    printf("initTimePass: %f\n", initTimePass);
 
     printf("Finished initializing. Press Enter to continue.\n");
     getchar();
