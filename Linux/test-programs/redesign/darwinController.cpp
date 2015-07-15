@@ -100,7 +100,7 @@ bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
     return false;
 }
 
-// calculates the wake up time
+// calculates the wake up time and stores it in LoopTime
 void Timing::IncrementTime(struct timespec *LoopTime, double PeriodSec){
     LoopTime->tv_nsec += PeriodSec * 1e9;
 
@@ -139,10 +139,15 @@ DarwinController::DarwinController(){
         ji.d = 0;
     }
 
-    uint8_t enables[20] = {0, };
+    uint8_t enables[20] = {0, }; // disable all motors at first
     uint8_t pgains[20] = {0, };
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
+
+    for(int i = 0; i < 20; i++){ //default Robotis dgain is 32
+        pgains[i] = 32; 
+    }
+
 
     Set_Enables(enables);
     Set_P_Data(pgains);
@@ -169,7 +174,7 @@ bool DarwinController::PowerDXL(){
 }
 
 bool DarwinController::Initialize(const char* name){
-    //port = Port(name); // for now.
+
     if(port.OpenPort(name) == false){
         fprintf(stderr, "\n Fail to open port\n");
         fprintf(stderr, " CM-730 is used by another program or does not have root privileges.\n\n");
@@ -201,7 +206,7 @@ bool DarwinController::InitToPose(){
     unsigned char initpacket[108] = {0, };
     unsigned char initparams[100] = {0, };
 
-    // Red means stop
+    // Red eyes - Initialization in progress
     int color = MakeColor(255, 0, 0);
     unsigned char colorparams[2] = {GetLowByte(color), GetHighByte(color)}; 
 
@@ -214,18 +219,14 @@ bool DarwinController::InitToPose(){
        initparams[2*IDnum] = (unsigned char)(IDnum+1); // +1 because motors start at 1
        initparams[2*IDnum+1] = 0x01;
     }
+
     unsigned char paramlength = 1;
     unsigned char initnumparams = 40;
-    int result = SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength);
-    printf("syncwrite result1: %d\n", result);
-
-    /*
-    port.ClearPort();
-    if(port.WritePort(initpacket, 48) != 48){
-        printf("Failed init to pose! Failed Torque Enable!\n");
+    
+    if(SyncWrite(initpacket, 0x18, initparams, initnumparams, paramlength) != 48){
+        printf("Failed Torque Enable in InitToPose!\n");
         return false;
     }
-    */
 
     usleep(2000);
 
@@ -233,23 +234,18 @@ bool DarwinController::InitToPose(){
     for(int z = 0; z < 20; z++){
         initparams[5*z] = z+1;
         initparams[5*z+1] = 0x00;
-        initparams[5*z+2] = 0x08;
+        initparams[5*z+2] = 0x08; // "zero" neutral position is 2048
         initparams[5*z+3] = 0x40;
         initparams[5*z+4] = 0x00;
     }
-    result = SyncWrite(initpacket, 0x1E, initparams, 100, 4);
-    printf("syncwrite result2: %d\n", result);
-
-    /*
-    port.ClearPort();
-    if(port.WritePort(initpacket, 108) != 108){
-        printf("Failed init to pose! \n");
+    if(SyncWrite(initpacket, 0x1E, initparams, 100, 4) != 108){
+        printf("Failed to init to pose\n");
         return false;
     }
-    */
-        
+
     sleep(1);
-    // Green means go
+
+    // Green eyes - Finished initializing
     color = MakeColor(0, 255, 0); 
     initpacket[6] = GetLowByte(color);
     initpacket[7] = GetHighByte(color);

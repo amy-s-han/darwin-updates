@@ -2,6 +2,8 @@
 #define _DARWINCONTROLLER_H_
 
 #include <stdint.h>
+#include <time.h>
+
 
 #include "CM730.h"
 

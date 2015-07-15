@@ -39,6 +39,8 @@ struct Playback{
 
     vector<double> angles_rad;
 
+    double PeriodSec;
+
 };
 
 
@@ -112,6 +114,8 @@ int main(int argc, char** argv){
 
     Playback play = {false, argv[1], 0}; //initialize first 3 vars in struct
 
+    play.PeriodSec = 0.008; 
+
     if (!parse_file(play)){
         cerr << "no trajectory loaded, exiting.\n";
         return 1;
@@ -152,8 +156,8 @@ int main(int argc, char** argv){
     uint8_t dgains[20] = {0, };
 
     for(int i = 0; i < 20; i++){
-      pgains[i] = 5; // what to set gains to initially???
-      igains[i] = 1;
+      pgains[i] = 32; // what to set gains to initially???
+      igains[i] = 0;
     }
 
     darCon.Set_P_Data(pgains);
@@ -204,7 +208,7 @@ int main(int argc, char** argv){
     // If it is 1023, it is about 54rpm.
     // For example, if it is set to 300, it is about 15.82 rpm.
 
-    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){ 
+    if(!darCon.SetAllJointSpeeds(0x00, 0x00)){ 
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
@@ -215,6 +219,8 @@ int main(int argc, char** argv){
     }
     
     // Implement timing struct for clock_nanosleep
+    struct timespec LoopTime;
+    clock_gettime(CLOCK_MONOTONIC, &LoopTime);
 
     double TimePassed;
 
@@ -255,7 +261,7 @@ int main(int argc, char** argv){
 
             goalpos[i] = darCon.RadAngle2Ticks(cur_angle);
 
-            // do i still need this?
+
             if (cur_angle < -8 || cur_angle > 8) {
                 // error
                 printf("ERRORRRRR!");
@@ -271,15 +277,17 @@ int main(int argc, char** argv){
 
         TimePassed = darCon.Time.TimePassed(StartTime);
 
-        printf("StartTime: %f\n", StartTime);
-        printf("TimePassed: %f\n", TimePassed);
         times[ticknum] = TimePassed; 
 
-        sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
+        //sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
 	   
         ticknum ++;
 
+         darCon.Time.IncrementTime(&LoopTime, play.PeriodSec);
+         darCon.Time.LoopTimeControl(&LoopTime);
+
     }
+
 
     printf("TICK NUMBER: %d\n . Press Enter to continue", (int)play.nticks);
 
