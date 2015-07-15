@@ -4,6 +4,7 @@ set(sources
 	darwinController.cpp
 	CM730.cpp
 	playback_redesign.cpp
+	#test.cpp
 	)
 
 add_executable(playback_redesign ${sources})

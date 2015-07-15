@@ -483,6 +483,16 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
                     }
 
+                    //*********************************************
+                    int buf = 30;
+                    for(int i = 0; i < 20; i++){
+                        for(int j = 0; j < 23; j++)
+                            printf("%d", info[buf++]);
+                        printf("%d \n", info[buf++]);
+                    }                
+                    //**********************************************
+
+
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
                     int cur_packet_length = LENGTH + 1 + rxpacket[LENGTH];

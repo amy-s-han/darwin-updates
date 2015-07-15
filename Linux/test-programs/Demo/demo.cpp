@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define PGAIN (0xF0)
+#define PGAIN (0x01)
 #define IGAIN (0)
 #define DGAIN (0)
 
