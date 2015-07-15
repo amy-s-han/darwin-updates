@@ -114,7 +114,7 @@ int main(int argc, char** argv){
 
     Playback play = {false, argv[1], 0}; //initialize first 3 vars in struct
 
-    play.PeriodSec = 0.000028; // 0.028 miliseconds. 
+    play.PeriodSec = 0.008; 
 
     if (!parse_file(play)){
         cerr << "no trajectory loaded, exiting.\n";
@@ -208,7 +208,7 @@ int main(int argc, char** argv){
     // If it is 1023, it is about 54rpm.
     // For example, if it is set to 300, it is about 15.82 rpm.
 
-    if(!darCon.SetAllJointSpeeds(0x00, 0x00)){ 
+    if(!darCon.SetAllJointSpeeds(0x00, 0x80)){ 
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
@@ -279,7 +279,7 @@ int main(int argc, char** argv){
 
         times[ticknum] = TimePassed; 
 
-        sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
+        //sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
 	   
         ticknum ++;
 
