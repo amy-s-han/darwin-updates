@@ -13,20 +13,20 @@
 
 int main(int argc, char** argv){
    
-	DarwinController* darCon = new DarwinController();
+	DarwinController darCon = DarwinController();
 
-	if(darCon->Initialize("/dev/ttyUSB0") == false){
+	if(darCon.Initialize("/dev/ttyUSB0") == false){
 		fprintf(stderr, "Failed to initialize\n");
 		return 0;
 	}
 
 
 	printf("\n~~~ Testing MakeBulkPacket ~~~\n");
-    darCon->MakeBulkPacket(darCon->BulkReadTxPacket);
+    darCon.MakeBulkPacket(darCon.BulkReadTxPacket);
 
     
 	printf("\n~~~ Testing InitToPose ~~~\n");
-	darCon->InitToPose();
+	darCon.InitToPose();
 
 	printf("Press ENTER to continue testing.\n");
 	getchar();
@@ -36,15 +36,17 @@ int main(int argc, char** argv){
 	unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 	unsigned char txpacketread[] = {0, 0, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
 
-	darCon->FinishPacket(txpacketread);
+	darCon.FinishPacket(txpacketread);
 
-    int result = darCon->ReadWrite(txpacketread, rxpacket);
+    int result = darCon.ReadWrite(txpacketread, rxpacket);
+
+    printf("Read result: %d\n", result);
     int word = 0;
 
 	if(result == 0){
 		printf("Failed read! \n");
 	} else {
-		word = darCon->MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
+		word = darCon.MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
     	printf("Successful read. Motor position: %d\n\n", word);
 
 	}
@@ -56,24 +58,24 @@ int main(int argc, char** argv){
 
 	
 	while(result == 0){
-		result = darCon->ReadWrite(txpacketread, rxpacket);
+		result = darCon.ReadWrite(txpacketread, rxpacket);
 	}
 
 	if(word == 0){
-		word = darCon->MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
+		word = darCon.MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
 	}
 	
 	word += 200;
-    int value_low = darCon->GetLowByte(word);
-    int value_high = darCon->GetHighByte(word);
+    int value_low = darCon.GetLowByte(word);
+    int value_high = darCon.GetHighByte(word);
 
 	unsigned char txpacketwrite[] = {0, 0, 0x14, 0x05, 0x03, 0x1E, 0, 0, 0};
 	txpacketwrite[PARAMETER+1] = value_low;
 	txpacketwrite[PARAMETER+2] = value_high;
 
-	darCon->FinishPacket(txpacketwrite);
+	darCon.FinishPacket(txpacketwrite);
 
-	int result2 = darCon->ReadWrite(txpacketwrite, rxpacket);
+	int result2 = darCon.ReadWrite(txpacketwrite, rxpacket);
 	if(result2 == 0){
 		printf("failed write!\n");
 	} else {
@@ -84,18 +86,15 @@ int main(int argc, char** argv){
 	getchar();
 
 	printf("\n~~~ Testing BulkRead ~~~\n");
-	int result3 = darCon->BulkRead(rxpacket);
+	int result3 = darCon.BulkRead(rxpacket);
 
 	printf("result3: %d\n", result3);
 
 	
-
-
-    
 	printf("Press ENTER to close port\n");
 	getchar();
 
-	darCon->ClosePort();
+	darCon.ClosePort();
 
 
 }

@@ -352,14 +352,14 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
     int num = 0; 
 
     if(port.WritePort(txpacket, length) == length){ //write to port
-      //printf("in readwrite length: %d\n", length);
+      printf("in readwrite length: %d\n", length);
 
-        if(txpacket[ID] = ID_BROADCAST){
-            return length;
-        }
+      if(txpacket[INSTRUCTION] == SYNC_WRITE){
+	return length;
+      }
 
         if(txpacket[INSTRUCTION] == BULK_READ){ //set bulk read vars
-
+	  printf("Bulkread var setting\n");
             num = (txpacket[LENGTH]-3) / 3;
     
             for(int i = 0; i < num; i++){
@@ -396,7 +396,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             if(fail_counter >= 5){
                 if(txpacket[INSTRUCTION] == PING){ 
                     //failed reading 5 times. return.
-                    //printf("failed ping\n");
+                    printf("failed ping\n");
                 }
                 return 0; // culprit. things go wrong if this returns -1. 
            }
@@ -467,17 +467,29 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-                //printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+                printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+		printf("rx: %u, checksum: %u\n", rxpacket[LENGTH + rxpacket[LENGTH]], checksum);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-                        //printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
 
                         // *************************************
                         info[count++] = rxpacket[PARAMETER + j];
                         // *************************************
 
                     }
+
+                    //*********************************************
+                    int buf = 30;
+                    for(int i = 0; i < 20; i++){
+		      for(int j = 0; j < 23; j++){
+			//printf("%d", info[buf++]);
+		      }
+		      //printf("%d \n", info[buf++]);
+                    }                
+                    //**********************************************
+
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
@@ -489,7 +501,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     get_length = to_length;
                     num--;
                 } else {
-                    //printf("rx corrupt\n");
+                    //printf("checksum rx corrupt\n");
                     for(int j = 0; j <= get_length - 2; j++){
                         rxpacket[j] = rxpacket[j+2];
                     }
@@ -497,11 +509,13 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 } 
 
                 if(num == 0){
+		  printf("breaking b/c num == 0\n");
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
-                        //printf("rx corrupt\n");
+                        printf("num != 0 rx corrupt\n");
                     }
+		    printf("outside loop breaking\n");
                     break;
                 }
             } else {

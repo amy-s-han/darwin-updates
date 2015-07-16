@@ -13,7 +13,6 @@ using namespace std;
 #define IGAIN (0x8)
 #define DGAIN (0x00)
 
-
 #define LENGTH (3)
 #define PARAMETER (5)
 #define MAXNUM_TXPARAM (256)
