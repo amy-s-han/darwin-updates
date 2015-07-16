@@ -129,7 +129,7 @@ bool Ping(int id, int *error, Port *port) {
             port->WritePort(txpacket, length);
         } 
         if(isTimeOut(packetStartTime, packetWaitTime)){
-	  //printf("timeout!\n");
+	        //printf("timeout!\n");
             fail_counter++;
             get_length = 0;
             packetStartTime = getCurrentTime();
@@ -218,8 +218,8 @@ void bulkread(Port *port, unsigned char info[]){
 
         int get_length = 0;
 
-	printf("getlength: %d, tolength: %d\n", get_length, to_length);
-	getchar();
+    	printf("getlength: %d, tolength: %d\n", get_length, to_length);
+    	getchar();
 
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
@@ -233,7 +233,7 @@ void bulkread(Port *port, unsigned char info[]){
                     if(get_length == 0){
                         printf("timed out\n");
                     } else {
-		      //printf("rxpacket corrupt\n");
+		                //printf("rxpacket corrupt\n");
                     }
                 }
             }
@@ -244,12 +244,12 @@ void bulkread(Port *port, unsigned char info[]){
             port->BulkData[_id].error = -1;
         }
 
-	/*
-	for(int i = 0; i<587; i++){
-	   printf("%d ", rxpacket[i]);
-	  getchar();
-	}
-	*/
+    	/*
+    	for(int i = 0; i<587; i++){
+    	   printf("%d ", rxpacket[i]);
+    	  getchar();
+    	}
+    	*/
 
         while(1){
             int i;
@@ -264,11 +264,11 @@ void bulkread(Port *port, unsigned char info[]){
             if(i == 0){ //header is at beginning of packet
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
-		printf("rxpacket[ID]: %d\n", rxpacket[ID]);
+		        printf("rxpacket[ID]: %d\n", rxpacket[ID]);
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         port->BulkData[rxpacket[ID]].table[port->BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-			printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
+                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]);
                         info[count++] = rxpacket[PARAMETER + j];
                     }
 
@@ -283,7 +283,7 @@ void bulkread(Port *port, unsigned char info[]){
                     get_length = to_length;
                     num--;
                 } else {
-		  //printf("rx corrupt\n");
+		            //printf("rx corrupt\n");
                     for(int j = 0; j <= get_length - 2; j++){
                         rxpacket[j] = rxpacket[j+2];
                     }
@@ -294,7 +294,7 @@ void bulkread(Port *port, unsigned char info[]){
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
-		      // printf("rx corrupt\n");
+		                // printf("rx corrupt\n");
                     }
                     break;
                 }
