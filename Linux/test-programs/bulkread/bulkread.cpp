@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include "ports.h"
+#include <stdint.h>
+
 
 using namespace std;
 
@@ -15,6 +17,31 @@ using namespace std;
 #define MAXNUM_TXPARAM      (256)
 #define MAXNUM_RXPARAM      (1024)
 
+struct ReadData {
+        uint8_t  p;
+        uint8_t  i;
+        uint8_t  d;
+
+        uint16_t goal_pos;
+        uint16_t max_speed;
+        uint16_t cur_pos;
+        uint16_t cur_speed;
+        uint16_t load;
+        uint16_t torque_limit;
+
+        uint8_t  registered;
+        uint8_t  moving;
+};
+
+int MakeWord(int lowbyte, int highbyte){
+    unsigned short word;
+
+    word = highbyte;
+    word = word << 8;
+    word = word + lowbyte;
+
+    return (int)word;
+}
 
 unsigned char CalculateChecksum(unsigned char *packet)
 {
@@ -301,35 +328,49 @@ int main(int argc, char** argv){
     //dxl power on stuff
     //(WriteByte(CM730::ID_CM, CM730::P_DXL_POWER, 1, 0)
 
+    ReadData joint_read_data[21];
+
+
     unsigned char dxltxpacket[] = {0xFF, 0xFF, 0xC8, 0x04, 0x03, 0x18, 0x01, 0};
     dxltxpacket[7] = CalculateChecksum(dxltxpacket);
     port->WritePort(dxltxpacket, 8);
-    printf("Finshed dxl power up. Press enter\n");
+    printf("Finished dxl power up. Press enter\n");
     getchar();
     int buf = 30;
     bulkread(port, info);
     for(int i = 0; i<20; i++){
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d ", info[buf++]);
-	printf("%d \n", info[buf++]);}
+        // 23 uchars per motor
+        ReadData& rd = joint_read_data[i];
+        rd.d = info[buf];
+        rd.i = info[buf+1];
+        rd.p = info[buf+2];
+
+        rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
+        rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
+        rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
+        rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
+        rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
+        rd.load = MakeWord(info[buf+14], info[buf+15]);
+
+        rd.registered = info[buf+18];
+        rd.moving = info[buf+20];
+
+        buf = buf + 23;
+    }
+
+    for(int i = 0; i<20; i++){
+        ReadData& rd = joint_read_data[i];
+        printf("%d ", rd.d);
+        printf("%d ", rd.i);
+        printf("%d ", rd.p);
+        printf("%d ", rd.goal_pos);
+        printf("%d ", rd.max_speed);
+        printf("%d ", rd.torque_limit);
+        printf("%d ", rd.cur_pos);
+        printf("%d ", rd.cur_speed);
+        printf("%d ", rd.load);
+        printf("%d ", rd.registered);
+        printf("%d ", rd.moving);
+    }
+
 }
