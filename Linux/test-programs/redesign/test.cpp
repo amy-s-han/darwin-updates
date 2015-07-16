@@ -22,7 +22,8 @@ int main(int argc, char** argv){
 
 
 	printf("\n~~~ Testing MakeBulkPacket ~~~\n");
-    darCon.MakeBulkPacket(darCon.BulkReadTxPacket);
+	darCon.MakeBulkPacket(darCon.BulkReadTxPacket);
+	getchar();
 
     
 	printf("\n~~~ Testing InitToPose ~~~\n");

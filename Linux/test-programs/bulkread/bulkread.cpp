@@ -169,7 +169,7 @@ void bulkread(Port *port, unsigned char info[]){
     BulkReadTxPacket[length - 1] = CalculateChecksum(BulkReadTxPacket);
 
     //finish making bulkread packet
-
+    
 
     port->ClearPort(); //calls tcflush(m_Socket_fd, TCIFLUSH)
 	if(port->WritePort(BulkReadTxPacket, length) == length){
@@ -192,8 +192,11 @@ void bulkread(Port *port, unsigned char info[]){
         int get_length = 0;
 
 	printf("getlength: %d, tolength: %d\n", get_length, to_length);
+	getchar();
+
         while(1){
             length = port->ReadPort(&rxpacket[get_length], to_length - get_length);
+
             get_length += length;
 
             if(get_length == to_length){
@@ -213,6 +216,13 @@ void bulkread(Port *port, unsigned char info[]){
             int _id = BulkReadTxPacket[PARAMETER+(3*i)+2];
             port->BulkData[_id].error = -1;
         }
+
+	/*
+	for(int i = 0; i<587; i++){
+	   printf("%d ", rxpacket[i]);
+	  getchar();
+	}
+	*/
 
         while(1){
             int i;
@@ -239,6 +249,7 @@ void bulkread(Port *port, unsigned char info[]){
 
                     int cur_packet_length = LENGTH + 1 + rxpacket[LENGTH];
                     to_length = get_length - cur_packet_length;
+
                     for(int j = 0; j <= to_length; j++){
                         rxpacket[j] = rxpacket[j+cur_packet_length];
                     }
