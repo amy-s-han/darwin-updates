@@ -25,8 +25,6 @@
 
 using namespace std;
 
-enum { ALT_NUM_JOINTS = 20 } ;
-
 //make a playback struct~~~
 struct Playback{
 
@@ -68,8 +66,8 @@ bool parse_file(Playback& play) {
         return false;
     }
 
-    if (play.njoints != ALT_NUM_JOINTS) {
-        cerr << "incorrect # joints: got " << play.njoints << ", expected " << ALT_NUM_JOINTS << "\n";
+    if (play.njoints != NUM_JOINTS) {
+        cerr << "incorrect # joints: got " << play.njoints << ", expected " << NUM_JOINTS << "\n";
         return false;
     }
 
@@ -133,9 +131,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    printf("NUM_JOINTS: %d and ALT_NUM_JOINTS: %d\n\n", NUM_JOINTS, ALT_NUM_JOINTS);
-
-    assert( play.angles_rad.size() == play.nticks * ALT_NUM_JOINTS );
+    assert( play.angles_rad.size() == play.nticks * NUM_JOINTS );
 
     //Set all joints to be enabled in jointData
 
@@ -174,7 +170,7 @@ int main(int argc, char** argv){
 
     double StartTime = darCon.Time.getCurrentTime(); // Start timing!
 
-    for(int i = 0; i < ALT_NUM_JOINTS; i++){
+    for(int i = 0; i < NUM_JOINTS; i++){
         //printf("In for loop: %d\n", i);
         //printf("from angles_rad: %f\n", play.angles_rad[play.offset_counter]);
 
@@ -188,6 +184,8 @@ int main(int argc, char** argv){
 
     // initialize to first tick
     darCon.Update_Motors();
+
+    darCon.port.DrainPort();
 
     double initTimePass = darCon.Time.TimePassed(StartTime);
 
@@ -241,7 +239,7 @@ int main(int argc, char** argv){
         // printf("Tick: %d\n", ticknum+1);
 
         //put trajectory data into jointData
-        for (int i=0; i<ALT_NUM_JOINTS; ++i) {
+        for (int i=0; i<NUM_JOINTS; ++i) {
 
             if(play.offset_counter > play.angles_rad.size()){ //check if done
                 play.isPlaying = false;
@@ -285,19 +283,27 @@ int main(int argc, char** argv){
 
     }
 
-    printf("TICK NUMBER: %d\n . Press Enter to continue", (int)play.nticks);
+    printf("TICK NUMBER: %d\n  Press Enter to continue", (int)play.nticks);
 
     getchar();
 
     double sum = 0;
+    double max = 0;
+    double min = 1000000000;
 
     for(int i = 0; i < (int)play.nticks; i++){
-        printf("%d: %f  || ", i, times[i]);
         sum += times[i];
+	if(times[i] > max){
+	  max = times[i];
+	} else if(times[i] < min){
+	  min = times[i];
+	}
     }
 
     double avgTime = sum / (int)play.nticks;
-    printf("\n\nAVGTIME: %f\n", avgTime);
+    printf("\n\n Avg: %f\n", avgTime);
+    printf("Max: %f\n", max);
+    printf("Min: %f\n", min);
 
     printf("Press ENTER to close port\n");
     getchar();
