@@ -269,6 +269,9 @@ int main(int argc, char** argv){
         // write out all changes. 
         darCon.Update_Motors();
 
+         // TODO: tcdrain() serial FD for better measurement
+        darCon.port.DrainPort();
+
         TimePassed = darCon.Time.TimePassed(StartTime);
 
         times[ticknum] = TimePassed; 

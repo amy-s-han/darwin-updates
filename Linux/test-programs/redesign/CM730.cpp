@@ -25,8 +25,7 @@ Port::~Port(){
 
 }
 
-bool Port::OpenPort(const char* name)
-{
+bool Port::OpenPort(const char* name){
 
 	struct termios newtio;
     struct serial_struct serinfo;
@@ -81,8 +80,7 @@ bool Port::OpenPort(const char* name)
 
 }
 
-void Port::ClosePort()
-{
+void Port::ClosePort(){
     if(m_Socket_fd != -1)
         close(m_Socket_fd);
     m_Socket_fd = -1;
@@ -93,13 +91,15 @@ void Port::ClearPort()
     tcflush(m_Socket_fd, TCIFLUSH);
 }
 
-int Port::WritePort(unsigned char* packet, int numPacket)
-{
+void Port::DrainPort(){
+    tcdrain(m_Socket_fd);
+}
+
+int Port::WritePort(unsigned char* packet, int numPacket){
     return write(m_Socket_fd, packet, numPacket);
 }
 
-int Port::ReadPort(unsigned char* packet, int numPacket)
-{
+int Port::ReadPort(unsigned char* packet, int numPacket){
     return read(m_Socket_fd, packet, numPacket);
 }
 

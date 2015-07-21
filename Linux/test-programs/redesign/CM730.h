@@ -168,6 +168,7 @@ class Port {
 		bool OpenPort(const char* name);
 		void ClosePort();
 		void ClearPort();
+		void DrainPort();
 		int WritePort(unsigned char* packet, int numPacket);
 		int ReadPort(unsigned char* packet, int numPacket);
 
