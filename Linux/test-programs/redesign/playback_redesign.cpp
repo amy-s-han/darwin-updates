@@ -1,3 +1,4 @@
+// playback_redesign 
 
 #include <string>
 #include <iostream>
@@ -90,13 +91,11 @@ bool parse_file(Playback& play) {
                 cerr << "error parsing angle!\n";
                 return false;
             }
-	    
 
             ++play.offset_counter;
         }
     }
         
-
     return true;
 
 }
@@ -107,7 +106,7 @@ bool IsDone(Playback play){
 
 int main(int argc, char** argv){
 
-    if (argc != 2) {
+    if (argc != 2) { // check command line arguments
         cerr << "usage: " << argv[0] << " TRAJ_FILENAME.txt\n";
         return 1;
     }
@@ -116,7 +115,7 @@ int main(int argc, char** argv){
 
     play.PeriodSec = 0.008; // In seconds
 
-    if (!parse_file(play)){
+    if (!parse_file(play)){ // parse the file
         cerr << "no trajectory loaded, exiting.\n";
         return 1;
     }
@@ -155,19 +154,17 @@ int main(int argc, char** argv){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
+    // default gains: P: 32, I: 0, D: 0. 
     for(int i = 0; i < 20; i++){
-      pgains[i] = 32; // what to set gains to initially???
-      igains[i] = 0;
+        pgains[i] = 32; // what to set gains to initially???
+        igains[i] = 0;
     }
 
     darCon.Set_P_Data(pgains);
     darCon.Set_I_Data(igains);
     darCon.Set_D_Data(dgains);
 
-     darCon.Update_Motors();
-
-    usleep(100000); // not sure why i want this sleep
-
+    darCon.Update_Motors();
 
     play.offset_counter = 0; //reset to 0!
 
@@ -198,10 +195,6 @@ int main(int argc, char** argv){
 
     printf("initTimePass: %f\n", initTimePass);
 
-    printf("Finished initializing. Press Enter to continue.\n");
-    getchar();
-
-
     // TODO: set speed to something more reasonable?
 
     // Moving Speed
@@ -216,10 +209,8 @@ int main(int argc, char** argv){
         printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
     }
 
-
     printf("Press Enter to start playback\n");
     getchar();
-
 
     //start playing
     if(!play.angles_rad.empty()){
@@ -254,7 +245,6 @@ int main(int argc, char** argv){
                 play.isPlaying = false;
                 break;
             }
-
 
             //set jointData to reflect joint angles from the current time tick
            
@@ -291,7 +281,6 @@ int main(int argc, char** argv){
         while(!darCon.Time.LoopTimeControl(&LoopTime)); 
 
     }
-
 
     printf("TICK NUMBER: %d\n . Press Enter to continue", (int)play.nticks);
 
