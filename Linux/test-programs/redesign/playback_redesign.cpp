@@ -190,10 +190,13 @@ int main(int argc, char** argv){
     // initialize to first tick
     darCon.Update_Motors();
 
-
     double initTimePass = darCon.Time.TimePassed(StartTime);
 
     printf("initTimePass: %f\n", initTimePass);
+
+
+    printf("Press Enter to start playback\n");
+    getchar();
 
     // TODO: set speed to something more reasonable?
 
@@ -206,11 +209,9 @@ int main(int argc, char** argv){
     // For example, if it is set to 300, it is about 15.82 rpm.
 
     if(!darCon.SetAllJointSpeeds(0x00, 0x00)){ 
-        printf("COULD NOT RESET SPEED TO SOMETHING REASONABLE\n");
+        printf("Could not reset speed to 0x00.\n");
+	return 1;
     }
-
-    printf("Press Enter to start playback\n");
-    getchar();
 
     //start playing
     if(!play.angles_rad.empty()){
