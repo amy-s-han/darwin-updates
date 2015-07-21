@@ -470,35 +470,13 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
 
-		        printf("rxpacket[ID]: %d\n", rxpacket[ID]); // for debugging
+	//	        printf("rxpacket[ID]: %d\n", rxpacket[ID]); // for debugging
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
-                        printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]); // for debugging
+ //                       printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]); // for debugging
                         info[count++] = rxpacket[PARAMETER + j];
                     }
-
-                    // Sort into structs here
-                    for(int i = 0; i<20; i++){
-                        ReadData& rd = jointRead[i];
-                        rd.d = info[buf];
-                        rd.i = info[buf+1];
-                        rd.p = info[buf+2];
-
-                        rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
-                        rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
-                        rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
-                        rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
-                        rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
-                        rd.load = MakeWord(info[buf+14], info[buf+15]);
-
-                        rd.registered = info[buf+18];
-                        rd.moving = info[buf+20];
-
-                        // 23 uchars per motor
-                        buf = buf + 23;
-                    }
-
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
@@ -537,7 +515,28 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             }
 	  
         }
-        
+ 
+        // Sort into structs here
+        for(int i = 0; i<20; i++){
+            ReadData& rd = jointRead[i];
+            rd.d = info[buf];
+            rd.i = info[buf+1];
+            rd.p = info[buf+2];
+
+            rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
+            rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
+            rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
+            rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
+            rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
+            rd.load = MakeWord(info[buf+14], info[buf+15]);
+
+            rd.registered = info[buf+18];
+            rd.moving = info[buf+20];
+
+            // 23 uchars per motor
+            buf = buf + 23;
+        }
+
         return return_length;
     }
 
