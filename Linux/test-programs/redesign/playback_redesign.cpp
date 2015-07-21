@@ -133,7 +133,6 @@ int main(int argc, char** argv){
         return 1;
     }
 
-
     printf("NUM_JOINTS: %d and ALT_NUM_JOINTS: %d\n\n", NUM_JOINTS, ALT_NUM_JOINTS);
 
     assert( play.angles_rad.size() == play.nticks * ALT_NUM_JOINTS );
@@ -213,6 +212,8 @@ int main(int argc, char** argv){
 	return 1;
     }
 
+    darCon.Update_Motors(); // write out new speed
+
     //start playing
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
@@ -271,8 +272,6 @@ int main(int argc, char** argv){
         TimePassed = darCon.Time.TimePassed(StartTime);
 
         times[ticknum] = TimePassed; 
-
-        //sleep(0.08); //sleep 8ms before next time tick -> still worried about this.
 	   
         ticknum ++;
 

@@ -14,7 +14,7 @@
 
 #include "darwinController.h"
 
-#define NUM_JOINTS      (20)
+
 #define MAXNUM_TXPARAM  (256)
 #define MAXNUM_RXPARAM  (1024)
 #define ID              (2)
@@ -123,6 +123,9 @@ bool Timing::LoopTimeControl(struct timespec *LoopTime){
 
 
 DarwinController::DarwinController(){
+
+  printf("Num Joints: %d\n", NUM_JOINTS);
+
      // create bulk read data structure
     for(int i = 0; i < 254; i++){
         BulkData[i] = BulkReadData();

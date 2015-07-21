@@ -73,7 +73,7 @@ enum{
 	L_ANKLE_ROLL    	= 18,
 	HEAD_PAN        	= 19,
 	HEAD_TILT       	= 20,
-	NUM_JOINTS
+	NUM_JOINTS = 20,
 };
 
 enum{
