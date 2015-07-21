@@ -341,6 +341,7 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
 
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
+    int buf = 30;
     int length = 0;
     int count = 0;
     unsigned char info[MAXNUM_RXPARAM] = {0, };
@@ -477,15 +478,27 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                         info[count++] = rxpacket[PARAMETER + j];
                     }
 
-                    //*********************************************
-                    int buf = 30;
-                    for(int i = 0; i < 20; i++){
-            		    for(int j = 0; j < 23; j++){
-                            //printf("%d", info[buf++]);
-            		    }
-    		            //printf("%d \n", info[buf++]);
-                    }                
-                    //**********************************************
+                    // Sort into structs here
+                    for(int i = 0; i<20; i++){
+                        ReadData& rd = jointRead[i];
+                        rd.d = info[buf];
+                        rd.i = info[buf+1];
+                        rd.p = info[buf+2];
+
+                        rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
+                        rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
+                        rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
+                        rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
+                        rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
+                        rd.load = MakeWord(info[buf+14], info[buf+15]);
+
+                        rd.registered = info[buf+18];
+                        rd.moving = info[buf+20];
+
+                        // 23 uchars per motor
+                        buf = buf + 23;
+                    }
+
 
                     BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
@@ -523,14 +536,6 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 get_length -= i;
             }
 	  
-	    //***************************************
-        //THIS CODE BREAKS BULKREAD - PLEASE DO NOT USE
-	    // IT REWRITE THE RXPACKET AND NOTHING WORKS IF THAT HAPPENS
-            //int buf = 30;
-            //count = 0;
-            //for(int i = 0; i<20; i++)
-	           //rxpacket[count++] = info[buf++];
-        //****************************************
         }
         
         return return_length;

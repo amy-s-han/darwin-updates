@@ -13,6 +13,21 @@ struct JointData {
         uint8_t p, i, d;
 };
 
+struct ReadData {
+        uint8_t  p;
+        uint8_t  i;
+        uint8_t  d;
+
+        uint16_t goal_pos;
+        uint16_t max_speed;
+        uint16_t cur_pos;
+        uint16_t cur_speed;
+        uint16_t load;
+        uint16_t torque_limit;
+
+        uint8_t  registered;
+        uint8_t  moving;
+};
 
 class BulkReadData {
     public:
@@ -56,6 +71,8 @@ class DarwinController {
         Timing Time;
         
         JointData joints[NUM_JOINTS+1];
+        ReadData jointRead[NUM_JOINTS+1];
+
 
         BulkReadData BulkData[ID_BROADCAST]; //ID_BROADCAST = 254
         unsigned char BulkReadTxPacket[266];
