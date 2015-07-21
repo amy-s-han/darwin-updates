@@ -114,7 +114,7 @@ int main(int argc, char** argv){
 
     Playback play = {false, argv[1], 0}; //initialize first 3 vars in struct
 
-    play.PeriodSec = 0.008; 
+    play.PeriodSec = 0.008; // In seconds
 
     if (!parse_file(play)){
         cerr << "no trajectory loaded, exiting.\n";
@@ -217,28 +217,28 @@ int main(int argc, char** argv){
     }
 
 
+    printf("Press Enter to start playback\n");
+    getchar();
+
+
     //start playing
     if(!play.angles_rad.empty()){
         play.isPlaying = true;
     }
     
-    // Implement timing struct for clock_nanosleep
-    struct timespec LoopTime;
-    clock_gettime(CLOCK_MONOTONIC, &LoopTime);
-
     double TimePassed;
 
     // array to store all the times. 
     double times[play.nticks+play.njoints];
 
-
-
-    printf("Press Enter to start playback\n");
-    getchar();
-
     // First time Controller + Comm portion. 
     
     int ticknum = 0;
+
+    // Implement timing struct for clock_nanosleep
+    struct timespec LoopTime;
+    clock_gettime(CLOCK_MONOTONIC, &LoopTime);
+
     while(play.isPlaying){
 
         double StartTime = darCon.Time.getCurrentTime(); // Start timing!
@@ -248,7 +248,6 @@ int main(int argc, char** argv){
         // printf("Tick: %d\n", ticknum+1);
 
         //put trajectory data into jointData
-
         for (int i=0; i<ALT_NUM_JOINTS; ++i) {
 
             if(play.offset_counter > play.angles_rad.size()){ //check if done
@@ -257,7 +256,7 @@ int main(int argc, char** argv){
             }
 
 
-            //set the m_Joint to reflect joint angles from the current time tick
+            //set jointData to reflect joint angles from the current time tick
            
             double cur_angle = play.angles_rad[play.offset_counter];
             //printf("curangle %d: %d\n", i, darCon.RadAngle2Ticks(cur_angle));
@@ -267,7 +266,6 @@ int main(int argc, char** argv){
 
 
             if (cur_angle < -8 || cur_angle > 8) {
-                // error
                 printf("ERRORRRRR!");
             }
 
@@ -276,7 +274,7 @@ int main(int argc, char** argv){
 
         poscount = darCon.Set_Pos_Data(goalpos);
 
-        //updateMotors to write out all changes. 
+        // write out all changes. 
         darCon.Update_Motors();
 
         TimePassed = darCon.Time.TimePassed(StartTime);
@@ -287,8 +285,10 @@ int main(int argc, char** argv){
 	   
         ticknum ++;
 
-         darCon.Time.IncrementTime(&LoopTime, play.PeriodSec);
-         darCon.Time.LoopTimeControl(&LoopTime);
+        darCon.Time.IncrementTime(&LoopTime, play.PeriodSec);
+        
+        //breaks when the correct amount of time has passed
+        while(!darCon.Time.LoopTimeControl(&LoopTime)); 
 
     }
 
