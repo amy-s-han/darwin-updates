@@ -346,9 +346,10 @@ int main(int argc, char** argv){
 
         buf = buf + 23;
     }
-
+/*
     for(int i = 0; i<20; i++){
         ReadData& rd = joint_read_data[i];
+        printf("Motor ID: %d\n", i+1);
         printf("%d ", rd.d);
         printf("%d ", rd.i);
         printf("%d ", rd.p);
@@ -360,6 +361,7 @@ int main(int argc, char** argv){
         printf("%d ", rd.load);
         printf("%d ", rd.registered);
         printf("%d ", rd.moving);
+	printf("\n \n");
     }
-
+*/
 }
