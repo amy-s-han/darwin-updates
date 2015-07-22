@@ -27,10 +27,13 @@ int main(int argc, char** argv){
     	return 0;
     }
 
+    printf("Initialized. Press Enter.\n");
+    getchar();
+
     //Set all joints to be enabled in jointData
     uint8_t enables[20];
     
-    for(int i=0; i<20; i++){
+    for(int i = 0; i < 20; i++){
       enables[i] = 1;
     }
 
@@ -42,13 +45,17 @@ int main(int argc, char** argv){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
+    for(int i = 0; i < 20; i++){
+      pgains[i] = 1;
+    }
+
     darCon.Set_P_Data(pgains);
     darCon.Set_I_Data(igains);
     darCon.Set_D_Data(dgains);
 
     darCon.Update_Motors();
 
-    int p = 0;
+    int p = 1;
     int i = 0;
     int d = 0;
 
@@ -75,7 +82,7 @@ int main(int argc, char** argv){
 	    cin >> d;
 
 
-	    for(int i = 0; i < 0; i++){
+	    for(int i = 0; i < 20; i++){
 	        pgains[i] = p; // what to set gains to initially???
 	        igains[i] = i;
 	        dgains[i] = d;
@@ -101,8 +108,12 @@ int main(int argc, char** argv){
 	    darCon.Set_Pos_Data(5, 2048);
 	    darCon.Update_Motors();
 
+	    
+
 	    cout << "If done, enter 1, else enter 0." << endl;
 	    cin >> response;
+
+	    darCon.InitToPose();
 
 	    if(response == 1){
 	    	notDone = false;
