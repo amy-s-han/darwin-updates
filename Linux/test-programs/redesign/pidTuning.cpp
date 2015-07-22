@@ -42,12 +42,6 @@ int main(int argc, char** argv){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
-    // default gains: P: 32, I: 0, D: 0. 
-    for(int i = 0; i < 20; i++){
-        pgains[i] = 32; // what to set gains to initially???
-        igains[i] = 0;
-    }
-
     darCon.Set_P_Data(pgains);
     darCon.Set_I_Data(igains);
     darCon.Set_D_Data(dgains);
