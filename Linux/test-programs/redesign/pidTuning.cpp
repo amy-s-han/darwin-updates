@@ -82,8 +82,9 @@ int main(int argc, char** argv){
 
 
 	    for(int i = 0; i < 0; i++){
-	        pgains[i] = 32; // what to set gains to initially???
-	        igains[i] = 0;
+	        pgains[i] = p; // what to set gains to initially???
+	        igains[i] = i;
+	        dgains[i] = d;
 	    }
 
 	    darCon.Set_P_Data(pgains);
@@ -98,14 +99,13 @@ int main(int argc, char** argv){
 	    darCon.Set_Pos_Data(5, 2248);
 	    darCon.Update_Motors();
 
+	    //add some reads?
+
 	    printf("Press Enter\n");
 	    getchar();
 
 	    darCon.Set_Pos_Data(5, 2048);
 	    darCon.Update_Motors();
-
-
-
 
 	    cout << "If done, enter 1, else enter 0." << endl;
 	    cin >> response;
