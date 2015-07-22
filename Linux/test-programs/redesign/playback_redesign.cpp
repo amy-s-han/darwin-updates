@@ -15,14 +15,6 @@
 
 #include "darwinController.h"
 
-#define MAXNUM_TXPARAM 	(256)
-#define MAXNUM_RXPARAM 	(1024)
-#define ID		        (2)
-#define LENGTH         	(3)
-#define INSTRUCTION 	(4)
-#define ERRBIT		    (4)
-#define PARAMETER	    (5)
-
 using namespace std;
 
 //make a playback struct~~~
@@ -122,7 +114,7 @@ int main(int argc, char** argv){
 
     if(darCon.Initialize("/dev/ttyUSB0") == false){
         fprintf(stderr, "Failed to initialize\n");
-        return 0;
+        return 1;
     }
 
     // set speed 

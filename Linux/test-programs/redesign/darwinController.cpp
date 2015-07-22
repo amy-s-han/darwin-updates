@@ -959,6 +959,7 @@ void DarwinController::Set_Enables(unsigned char motor_ID, uint8_t data){
 
 
 // These set individual motor values
+// For PID, value is between 0 ~ 254
 void DarwinController::Set_P_Data(unsigned char motor_ID, uint8_t value){
     JointData& ji = joints[motor_ID];
     ji.p = value;
@@ -978,6 +979,7 @@ void DarwinController::Set_D_Data(unsigned char motor_ID, uint8_t value){
     ji.flags |= FLAG_GAINS_CHANGED;
 }
 
+// value is in ticks
 int DarwinController::Set_Pos_Data(unsigned char motor_ID, uint16_t value){
     JointData& ji = joints[motor_ID];
     ji.goal = value;
