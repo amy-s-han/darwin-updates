@@ -295,7 +295,7 @@ void DarwinController::MakeBulkPacket(unsigned char *BulkReadTxPacket){
         number++;
     }
     
-    for(int id = 1; id < 20; id++){ //NUMBER OF JOINTS = 20
+    for(int id = 1; id < 21; id++){ //NUMBER OF JOINTS = 20
        
        BulkReadTxPacket[PARAMETER+3*number+1] = 23;  // length
        BulkReadTxPacket[PARAMETER+3*number+2] = id; // id
@@ -477,7 +477,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                         BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
- //                       printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]); // for debugging
+                        // printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]); // for debugging
                         info[count++] = rxpacket[PARAMETER + j];
                     }
 
