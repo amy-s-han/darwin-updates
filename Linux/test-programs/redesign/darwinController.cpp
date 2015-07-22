@@ -24,7 +24,6 @@
 #define PARAMETER       (5)
 
 
-
 BulkReadData::BulkReadData() :
         start_address(0),
         length(0),
@@ -118,13 +117,10 @@ bool Timing::LoopTimeControl(struct timespec *LoopTime){
     } else {
         return false;
     }
-
 }
 
 
 DarwinController::DarwinController(){
-
-  printf("Num Joints: %d\n", NUM_JOINTS);
 
      // create bulk read data structure
     for(int i = 0; i < 254; i++){
