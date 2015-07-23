@@ -34,6 +34,9 @@ int main(int argc, char** argv){
 	
 
     printf("\n~~~ Testing Read ~~~\n");
+
+    // read word: txpacket = {0xFF, 0xFF, id, 4, INST_READ, start address, 2, checksum}
+    
 	unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 	unsigned char txpacketread[] = {0, 0, 0x14, 0x04, 0x02, 0x24, 0x02, 0};
 

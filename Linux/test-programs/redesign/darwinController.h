@@ -102,6 +102,7 @@ class DarwinController {
         int ReadWord(int id, int address, int *word);
 
         bool Ping(int id, int *error);
+        int ReadJointAngle(int id);
 
 
         unsigned char CalculateChecksum(unsigned char *packet);

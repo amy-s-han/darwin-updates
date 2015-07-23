@@ -5,11 +5,27 @@
 #include <fstream>
 
 #include <assert.h>
+#include <unistd.h>
 
 #include "darwinController.h"
 
 using namespace std;
 
+int input_validation(){
+    int resp;
+    bool notdone = true;
+    
+    while(notdone){
+    
+        cin >> resp;
+    
+        if(resp >= 0 && resp <= 254){
+            return resp;
+        } else {
+            printf("Gain has to be between 0 ~ 254. Try again.\n");
+        }
+    }
+}
 
 
 int main(int argc, char** argv){
@@ -46,7 +62,7 @@ int main(int argc, char** argv){
     uint8_t dgains[20] = {0, };
 
     for(int i = 0; i < 20; i++){
-      pgains[i] = 1;
+      pgains[i] = 32;
     }
 
     darCon.Set_P_Data(pgains);
@@ -66,20 +82,20 @@ int main(int argc, char** argv){
 
     int response;
 
-    while(notDone){
+    while(1){
 
 	    printf("PID values are: P: %d, I: %d, D: %d.\n", p, i, d);
 
 	    printf("PID values are ints between 0 ~ 254\n");
+        
+        printf("Enter int P value: \n");
+	    p = input_validation();
 
-	    cout << "Enter int P value: " << endl;
-	    cin >> p;
+	    printf("Enter int I value: \n");
+	    i = input_validation();
 
-	    cout << "Enter int I value: " << endl;
-	    cin >> i;
-
-	    cout << "Enter int D value: " << endl;
-	    cin >> d;
+	    printf("Enter int D value: \n");
+	    d = input_validation();
 
 
 	    for(int i = 0; i < 20; i++){
@@ -94,26 +110,45 @@ int main(int argc, char** argv){
 
 	    darCon.Update_Motors();
 
-	    printf("Motors updated. Press Enter.\n");
+	    printf("Motors updated. Press Enter to raise arm.\n");
 	    getchar();
 
-	    darCon.Set_Pos_Data(5, 2248);
+	    darCon.Set_Pos_Data(R_ELBOW, 2248);
 	    darCon.Update_Motors();
+
+        sleep(1);
+
+        int lift = darCon.ReadJointAngle(R_ELBOW);
+
 
 	    //add some reads?
 
-	    printf("Press Enter\n");
+	    printf("Press Enter to lower arm.\n");
 	    getchar();
 
 	    darCon.Set_Pos_Data(5, 2048);
 	    darCon.Update_Motors();
 
+        sleep(1);
+
+        int lower = darCon.ReadJointAngle(R_ELBOW);
 	    
+        printf("lift Goal: 2248. Actual: %d. Diff: %d\n", lift, 2248-lift);
+        printf("lower Goal: 2048. Actual: %d. Diff: %d\n", lower, lower - 2048);
 
-	    cout << "If done, enter 1, else enter 0." << endl;
-	    cin >> response;
+	    printf("Please enter 1 to quit, 0 to continue.\n");
 
-	    darCon.InitToPose();
+        while(1){
+            int response;
+            cin >> response;
+            if(response == 0 || response == 1){
+                break;
+            } else {
+                printf("Please enter 1 to quit, 0 to continue.\n");
+            }
+        }
+
+	    //darCon.InitToPose();
 
 	    if(response == 1){
 	    	notDone = false;

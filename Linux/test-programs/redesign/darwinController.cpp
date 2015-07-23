@@ -702,9 +702,27 @@ bool DarwinController::Ping(int id, int *error){
     }
 }
 
+int DarwinController::ReadJointAngle(int id){
 
-unsigned char DarwinController::CalculateChecksum(unsigned char *packet)
-{
+    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
+    unsigned char txpacketread[] = {0, 0, id, 0x04, 0x02, 0x24, 0x02, 0};
+
+    FinishPacket(txpacketread);
+
+    int result = ReadWrite(txpacketread, rxpacket);
+
+    if(result == 0){
+        printf("Failed read! \n");
+        return -9999999;
+    } else {
+        return MakeWord((int)rxpacket[PARAMETER], (int)rxpacket[PARAMETER + 1]);
+
+    }
+
+}
+
+
+unsigned char DarwinController::CalculateChecksum(unsigned char *packet){
     unsigned char checksum = 0x00;
     for(int i=2; i<packet[LENGTH]+3; i++ )
         checksum += packet[i];
