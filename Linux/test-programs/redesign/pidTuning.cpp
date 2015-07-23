@@ -43,8 +43,7 @@ int main(int argc, char** argv){
     	return 0;
     }
 
-    printf("Initialized. Press Enter.\n");
-    getchar();
+    sleep(1);
 
     //Set all joints to be enabled in jointData
     uint8_t enables[20];
@@ -71,7 +70,7 @@ int main(int argc, char** argv){
 
     darCon.Update_Motors();
 
-    int p = 1;
+    int p = 32;
     int i = 0;
     int d = 0;
 
@@ -82,7 +81,7 @@ int main(int argc, char** argv){
 
     int response;
 
-    while(1){
+    while(notDone){
 
 	    printf("PID values are: P: %d, I: %d, D: %d.\n", p, i, d);
 
@@ -109,6 +108,8 @@ int main(int argc, char** argv){
 	    darCon.Set_D_Data(dgains);
 
 	    darCon.Update_Motors();
+
+        sleep(0.5);
 
 	    printf("Motors updated. Press Enter to raise arm.\n");
 	    getchar();
