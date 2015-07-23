@@ -485,9 +485,11 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
                     to_length = get_length - cur_packet_length;
 
-                    for(int j = 0; j <= to_length; j++){
+                    // shift things after the first packet up to the beginning of the packet
+                    for(int j = 0; j <= to_length; j++){ 
                         rxpacket[j] = rxpacket[j+cur_packet_length];
                     }
+
                     get_length = to_length;
                     num--;
 
@@ -500,7 +502,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 } 
 
                
-                if(num == 0){
+                if(num == 0){ // got all of the packets
                     break;
                 } else if(get_length <= 6) {
                     if(num != 0){
@@ -508,7 +510,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                     }
                     break;
                 }
-            } else {
+            } else { // try to salvage packets
                 for(int j = 0; j < (get_length - i); j++){
                     rxpacket[j] = rxpacket[j+i];
                 }
@@ -706,6 +708,7 @@ bool DarwinController::Ping(int id, int *error){
     }
 }
 
+// returns joint angle in ticks of prompted joint
 int DarwinController::ReadJointAngle(int id){
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };

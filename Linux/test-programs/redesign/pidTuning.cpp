@@ -84,6 +84,9 @@ int main(int argc, char** argv){
     int response;
     string ans;
 
+    // bad things happen if you enter a char where it wants an int.
+    // no error checking for that. 
+
     while(notDone){
 
 	    printf("PID values are: P: %d, I: %d, D: %d.\n", p, i, d);

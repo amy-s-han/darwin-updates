@@ -98,7 +98,7 @@ int main(int argc, char** argv){
 	double timeTaken = darCon.Time.TimePassed(startTime);
 
 	printf("result3: %d\n", result3);
-	printf("BulkRead time taken: %f\n", timeTaken);
+	printf("BulkRead time taken: %f\n", timeTaken); // Usually takes ~12 miliseconds
 
 
 	darCon.ClosePort();
