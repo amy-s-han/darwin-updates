@@ -80,28 +80,40 @@ int main(int argc, char** argv){
     bool notDone = true;
 
     int response;
+    string ans;
 
     while(notDone){
 
 	    printf("PID values are: P: %d, I: %d, D: %d.\n", p, i, d);
 
 	    printf("PID values are ints between 0 ~ 254\n");
+
+        while(1){
+            printf("Run again with current values? y/n\n");
+            cin >> ans;
+
+            if(ans == "y" || "n"){
+                break;
+            }
+        }   
         
-        printf("Enter int P value: \n");
-	    p = input_validation();
-
-	    printf("Enter int I value: \n");
-	    i = input_validation();
-
-	    printf("Enter int D value: \n");
-	    d = input_validation();
-
-
-	    for(int i = 0; i < 20; i++){
-	        pgains[i] = p; // what to set gains to initially???
-	        igains[i] = i;
-	        dgains[i] = d;
-	    }
+        if(ans == "y"){
+            printf("Enter int P value: \n");
+            p = input_validation();
+    
+            printf("Enter int I value: \n");
+            i = input_validation();
+    
+            printf("Enter int D value: \n");
+            d = input_validation();
+    
+    
+            for(int i = 0; i < 20; i++){
+                pgains[i] = p; // what to set gains to initially???
+                igains[i] = i;
+                dgains[i] = d;
+            }
+        }
 
 	    darCon.Set_P_Data(pgains);
 	    darCon.Set_I_Data(igains);
@@ -121,9 +133,6 @@ int main(int argc, char** argv){
 
         int lift = darCon.ReadJointAngle(R_ELBOW);
 
-
-	    //add some reads?
-
 	    printf("Press Enter to lower arm.\n");
 	    getchar();
 
@@ -140,7 +149,6 @@ int main(int argc, char** argv){
 	    printf("Please enter 1 to quit, 0 to continue.\n");
 
         while(1){
-            int response;
             cin >> response;
             if(response == 0 || response == 1){
                 break;
@@ -152,6 +160,7 @@ int main(int argc, char** argv){
 	    //darCon.InitToPose();
 
 	    if(response == 1){
+            printf("Resp = 1\n");
 	    	notDone = false;
 	    	break;
 	    }
