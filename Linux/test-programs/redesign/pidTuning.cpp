@@ -61,7 +61,7 @@ int main(int argc, char** argv){
     uint8_t dgains[20] = {0, };
 
     for(int i = 0; i < 20; i++){
-      pgains[i] = 32;
+      pgains[i] = 0x32;
     }
 
     darCon.Set_P_Data(pgains);
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 
     darCon.Update_Motors();
 
-    int p = 32;
+    int p = 0x32;
     int i = 0;
     int d = 0;
 
@@ -170,7 +170,7 @@ int main(int argc, char** argv){
 	}
 
 	printf("Final PID values are: P: %d, I: %d, D: %d.\n", p, i, d);
-    
+
     darCon.ClosePort();
 
 

@@ -90,13 +90,16 @@ int main(int argc, char** argv){
 	getchar();
 
 	printf("\n~~~ Testing BulkRead ~~~\n");
+
+	double startTime = darCon.Time.getCurrentTime();
+
 	int result3 = darCon.BulkRead(rxpacket);
 
-	printf("result3: %d\n", result3);
+	double timeTaken = darCon.Time.TimePassed(startTime);
 
-	
-	printf("Press ENTER to close port\n");
-	getchar();
+	printf("result3: %d\n", result3);
+	printf("BulkRead time taken: %f\n", timeTaken);
+
 
 	darCon.ClosePort();
 

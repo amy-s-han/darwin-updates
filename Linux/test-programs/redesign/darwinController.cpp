@@ -122,18 +122,21 @@ bool Timing::LoopTimeControl(struct timespec *LoopTime){
 
 DarwinController::DarwinController(){
 
-     // create bulk read data structure
+    /* create bulk read data structure
     for(int i = 0; i < 254; i++){
         BulkData[i] = BulkReadData();
     }
+    */
 
     //initialize JointData struct:
+
+    BulkReadJointData = false;
 
     for(int i = 0; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         ji.flags = 0;
         ji.goal = -9999; //TODO: SET TO SOMETHING SAFER
-        ji.p = 0x05;     //TODO SET TO SOMETHING SAFER????
+        ji.p = 0x32;     //TODO SET TO SOMETHING SAFER????
         ji.i = 0;
         ji.d = 0;
     }
@@ -188,10 +191,6 @@ bool DarwinController::Initialize(const char* name){
         return true;
     }
 
-    // create bulk read data structure
-    for(int i = 0; i < 254; i++){
-        BulkData[i] = BulkReadData();
-    }
 }
 
 void DarwinController::ClosePort(){
@@ -346,6 +345,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
     unsigned char info[MAXNUM_RXPARAM] = {0, };
 
     length = txpacket[LENGTH] + 4;
+    int return_length = -99999;
     
     port.ClearPort();
 
@@ -369,8 +369,8 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 int _addr = txpacket[PARAMETER+(3*i)+3];
 
                 to_length += _len + 6;
-                BulkData[_id].length = _len;
-                BulkData[_id].start_address = _addr;
+                //BulkData[_id].length = _len;
+                //BulkData[_id].start_address = _addr;
             }
 
         } else if(txpacket[INSTRUCTION] == READ){
@@ -447,12 +447,14 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             return length;
         } 
 
+        /*
         for(int i = 0; i < num; i++){
             int _id = txpacket[PARAMETER+(3*i)+2];
             BulkData[_id].error = -1;
         }
+        */
 
-        int return_length = get_length;
+        return_length = get_length;
 
         while(1){ // this loop is purely for bulkread
             int i;
@@ -469,15 +471,15 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 // Check checksum
                 unsigned char checksum = CalculateChecksum(rxpacket);
 
-	//	        printf("rxpacket[ID]: %d\n", rxpacket[ID]); // for debugging
+                //printf("rxpacket[ID]: %d\n", rxpacket[ID]); // for debugging
                 if(rxpacket[LENGTH + rxpacket[LENGTH]] == checksum){
                     for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
-                        BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
+                        //BulkData[rxpacket[ID]].table[BulkData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
                         // printf("j: %d, rxpacket: %d\n", j, rxpacket[PARAMETER + j]); // for debugging
                         info[count++] = rxpacket[PARAMETER + j];
                     }
 
-                    BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
+                    //BulkData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
                     int cur_packet_length = LENGTH + 1 + rxpacket[LENGTH];
 
@@ -514,32 +516,35 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             }
 	  
         }
+
+        if(BulkReadJointData){
  
-        // Sort into structs here
-        for(int i = 0; i<20; i++){
-            ReadData& rd = jointRead[i];
-            rd.d = info[buf];
-            rd.i = info[buf+1];
-            rd.p = info[buf+2];
+            // Sort into structs here
+            for(int i = 0; i<20; i++){
+                ReadData& rd = jointRead[i];
+                rd.d = info[buf];
+                rd.i = info[buf+1];
+                rd.p = info[buf+2];
 
-            rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
-            rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
-            rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
-            rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
-            rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
-            rd.load = MakeWord(info[buf+14], info[buf+15]);
+                rd.goal_pos = MakeWord(info[buf+4], info[buf+5]);
+                rd.max_speed = MakeWord(info[buf+6], info[buf+7]);
+                rd.torque_limit = MakeWord(info[buf+8], info[buf+9]);
+                rd.cur_pos = MakeWord(info[buf+10], info[buf+11]);
+                rd.cur_speed = MakeWord(info[buf+12], info[buf+13]);
+                rd.load = MakeWord(info[buf+14], info[buf+15]);
 
-            rd.registered = info[buf+18];
-            rd.moving = info[buf+20];
+                rd.registered = info[buf+18];
+                rd.moving = info[buf+20];
 
-            // 23 uchars per motor
-            buf = buf + 23;
+                // 23 uchars per motor
+                buf = buf + 23;
+            }
         }
 
         return return_length;
     }
 
-    return length;
+    return return_length;
 }
 
 
@@ -560,14 +565,14 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
     packet[INSTRUCTION] = 0x83;    // Sync Write
     packet[5] = instruction;  // What is happening at each motor
     packet[6] = paramlength;  // Number of bytes written to each motor
+
     for(unsigned char i = 0; i < numparams; i++){
         packet[7+i] = params[i];
     }
+
     packet[len] = CalculateChecksum(packet);
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
-    
-    //printf("In syncwrite len: %d\n", len);
 
     return ReadWrite(packet, rxpacket);
     //return port.WritePort(packet, len+1); /alt method
@@ -628,7 +633,6 @@ int DarwinController::WriteWord(int id, int address, int value){
         return 0;
     }
 
-    // do we want to listen to rx packet?
 }
 
 
@@ -898,7 +902,7 @@ bool DarwinController::SetAllJointSpeeds(unsigned char highbyte, unsigned char l
 // Index 0 of the array corresponds to the value for motor 1
 // Index 0 of JointData joints[] corresponds to motor 0 -> not in use.
 
-// TODO: Check for vaid input data array that is 20 long. 
+// TODO: Check for vaid input data array that is 20 long?
 
 // 0 to disable motor and !0 to enable (or just pass in 1 to enable..)
 void DarwinController::Set_Enables(uint8_t* data){
@@ -912,6 +916,7 @@ void DarwinController::Set_Enables(uint8_t* data){
     }
 }
 
+// For PID, value is between 0 ~ 254
 int DarwinController::Set_P_Data(uint8_t* data){
     int counter = 0;
     for(int i=1; i<NUM_JOINTS+1; i++){
@@ -1109,35 +1114,9 @@ void DarwinController::Update_Motors(){
     }
 }
 
-//sample usage of joint data structure. take out of darwinController later.
 
-// void DarwinController::foo() {
-//     for(int i = 0; i<NUM_JOINTS+1; i++){
-//     JointData& ji = joints[i];
-//     ji.flags = 0;
-//         ji.goal = 2048;
-//         ji.p = 0x32;
-//         ji.i = 0;
-//         ji.d = 0;
-//     }
-
-//     uint8_t enables[20] = {0, };
-//     uint8_t pgains[20] = {0, };
-//     uint8_t igains[20] = {0, };
-//     uint8_t dgains[20] = {0, };
-//     uint16_t goalpos[20] = {2048, };
-
-
-//     Set_Enables(enables);
-//     int poscount = Set_Pos_Data(goalpos);
-// //    Set_P_Data(pgains);
-// //    Set_I_Data(igains);
-// //    Set_D_Data(dgains);
-
-//     printf("positions: %d\n", poscount);
-
-//     Update_Motors();
-// }
-
-
-
+void DarwinController::JointReadData(){
+    BulkReadJointData = true;
+    unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
+    BulkRead(rxpacket);
+}
