@@ -77,6 +77,8 @@ int main(int argc, char** argv){
     printf("Welcome to PID tuning! Press Enter to continue\n");
     getchar();
 
+    darCon.Update_Motors(); // to see if this cures initial loop twitchiness
+
     bool notDone = true;
 
     int response;
@@ -97,7 +99,7 @@ int main(int argc, char** argv){
             }
         }   
         
-        if(ans == "y"){
+        if(ans == "n"){
             printf("Enter int P value: \n");
             p = input_validation();
     
@@ -109,7 +111,7 @@ int main(int argc, char** argv){
     
     
             for(int i = 0; i < 20; i++){
-                pgains[i] = p; // what to set gains to initially???
+                pgains[i] = p; 
                 igains[i] = i;
                 dgains[i] = d;
             }
@@ -125,6 +127,7 @@ int main(int argc, char** argv){
 
 	    printf("Motors updated. Press Enter to raise arm.\n");
 	    getchar();
+        getchar();
 
 	    darCon.Set_Pos_Data(R_ELBOW, 2248);
 	    darCon.Update_Motors();
@@ -160,7 +163,6 @@ int main(int argc, char** argv){
 	    //darCon.InitToPose();
 
 	    if(response == 1){
-            printf("Resp = 1\n");
 	    	notDone = false;
 	    	break;
 	    }
@@ -168,10 +170,7 @@ int main(int argc, char** argv){
 	}
 
 	printf("Final PID values are: P: %d, I: %d, D: %d.\n", p, i, d);
-
-	printf("Press ENTER to close port\n");
-    getchar();
-
+    
     darCon.ClosePort();
 
 
