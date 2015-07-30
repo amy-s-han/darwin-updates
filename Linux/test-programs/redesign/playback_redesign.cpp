@@ -143,7 +143,7 @@ int main(int argc, char** argv){
     // default gains: P: 32, I: 0, D: 0. 
     for(int i = 0; i < 20; i++){
         pgains[i] = 0x38; // what to set gains to initially???
-        igains[i] = 0x10;
+        igains[i] = 0x08;
     }
 
     darCon.Set_P_Data(pgains);
@@ -198,12 +198,14 @@ int main(int argc, char** argv){
     struct timespec LoopTime;
     clock_gettime(CLOCK_MONOTONIC, &LoopTime);
 
+    int tick = 2;
+
     while(play.isPlaying){
 
         //put trajectory data into jointData
         for (int i=0; i<NUM_JOINTS; ++i) {
 
-            if(play.offset_counter > play.angles_rad.size()){ //check if done
+            if(play.offset_counter >= play.angles_rad.size()){ //check if done
                 play.isPlaying = false;
                 break;
             }
@@ -231,6 +233,8 @@ int main(int argc, char** argv){
         
         //breaks when the correct amount of time has passed
         while(!darCon.Time.LoopTimeControl(&LoopTime)); 
+
+	tick ++;
 
     }
 
