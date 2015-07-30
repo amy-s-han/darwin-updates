@@ -73,8 +73,9 @@ class DarwinController {
         JointData joints[NUM_JOINTS+1];
         ReadData jointRead[NUM_JOINTS+1];
 
+        bool BulkReadJointData;
 
-        BulkReadData BulkData[ID_BROADCAST]; //ID_BROADCAST = 254
+        //BulkReadData BulkData[ID_BROADCAST]; //ID_BROADCAST = 254
         unsigned char BulkReadTxPacket[266];
 
         DarwinController();
@@ -102,6 +103,7 @@ class DarwinController {
         int ReadWord(int id, int address, int *word);
 
         bool Ping(int id, int *error);
+        int ReadJointAngle(int id);
 
 
         unsigned char CalculateChecksum(unsigned char *packet);
@@ -147,9 +149,13 @@ class DarwinController {
 
         void Update_Motors();
 
+        // For JointRead Data struct
+        void JointReadData();
+
 
 
 };
 
 
 #endif
+ 
