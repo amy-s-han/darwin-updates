@@ -244,13 +244,6 @@ void bulkread(Port *port, unsigned char info[]){
             port->BulkData[_id].error = -1;
         }
 
-    	/*
-    	for(int i = 0; i<587; i++){
-    	   printf("%d ", rxpacket[i]);
-    	  getchar();
-    	}
-    	*/
-
         while(1){
             int i;
             for(i = 0; i< get_length - 1; i++){
