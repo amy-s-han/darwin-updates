@@ -1,4 +1,11 @@
-// CM730.cpp -
+/* CM730.cpp - 
+    handles the communication with the CM730 board on Darwin-OP. 
+    It is called by darwinController.cpp. The user should rarely 
+    have to directly interact with this file.
+
+    Summer 2015 - Amy Han and Daniel Rovner
+*/
+
 
 #include <unistd.h>
 #include <stdio.h>

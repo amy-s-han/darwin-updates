@@ -1,5 +1,10 @@
-// darwinController.cpp - contains a library of useful functions
-// that allow the user to control Darwin-OP
+/* darwinController.cpp - 
+    Library of useful functions for controlling Darwin-OP.
+    To use, create an instance of DarwinController and call its
+    Initialize method to open the port for communications.
+
+    Summer 2015 - Amy Han and Daniel Rovner
+*/
 
 #include <cstdlib>
 
@@ -23,6 +28,8 @@
 #define ERRBIT          (4)
 #define PARAMETER       (5)
 
+
+// BulkReadData structure is modeled after the Robotis BulkData structure.
 
 BulkReadData::BulkReadData() :
         start_address(0),
@@ -59,20 +66,18 @@ int BulkReadData::MakeWord(int lowbyte, int highbyte){
     return (int)word;
 }
 
-//Timing class:
+//Timing class - methods for getting current time and time passed
 
 Timing::Timing(){}
 Timing::~Timing(){}
 
-// Return: current time in miliseconds
+// Return - current time in miliseconds
 double Timing::getCurrentTime(){
     gettimeofday(&tv, NULL);
-
-    // I think this returns miliseconds 
     return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
 }
 
-// Returns time passed in miliseconds
+// Return - time passed in miliseconds given the start time (in miliseconds)
 double Timing::TimePassed(double StartTime){
     double time;
     time = getCurrentTime() - StartTime;
@@ -83,13 +88,16 @@ double Timing::TimePassed(double StartTime){
     return time;
 }
 
-
+/* isTimeOut - check if packet has timed out or not
+ * Return - true if packet has timed out
+ *        - false if the packet hasn't timed out yet
+ */
 bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
     double time;
     time = getCurrentTime() - packetStartTime;
     if(time < 0.0){
         printf("error\n");
-        //need to set packet start time to getCurrentTime();
+        //Maybe need to set packet start time to getCurrentTime();
     }
 
     if(time > packetWaitTime){
@@ -99,7 +107,10 @@ bool Timing::isTimeOut(double packetStartTime, double packetWaitTime){
     return false;
 }
 
-// calculates the wake up time and stores it in LoopTime
+/* IncrementTime - calculates the wake up time and stores it in LoopTime
+ * Inputs - LoopTime: Should already contain the starting time
+ *          PeriodSec: The period that we are aiming for (in seconds)
+ */
 void Timing::IncrementTime(struct timespec *LoopTime, double PeriodSec){
     LoopTime->tv_nsec += PeriodSec * 1e9;
 
@@ -109,7 +120,8 @@ void Timing::IncrementTime(struct timespec *LoopTime, double PeriodSec){
     }
 }
 
-// Return: False if woken up before wake time
+// LoopTimeControl - Used to ensure a constant loop time
+// Return - False if woken up before wake time
 bool Timing::LoopTimeControl(struct timespec *LoopTime){
     
     if(clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, LoopTime, NULL) == 0){
@@ -122,21 +134,30 @@ bool Timing::LoopTimeControl(struct timespec *LoopTime){
 
 DarwinController::DarwinController(){
 
+    // For each address, create a bulk read data structure. BulkData is
+    // a 2D array that's 254 x 49.
+
+
+    // Note - Robotis's bulk read data structure is weird so we didn't
+    //    spend too much time looking into it. You can uncomment the following
+    //    lines to use the data structure. 
+
     /* create bulk read data structure
     for(int i = 0; i < 254; i++){
         BulkData[i] = BulkReadData();
     }
     */
 
+    // set this to false so that bulkread() doesn't needlessly try to read and
+    //    parse joint data 
+    BulkReadJointData = false; 
+
     //initialize JointData struct:
-
-    BulkReadJointData = false;
-
     for(int i = 0; i<NUM_JOINTS+1; i++){
         JointData& ji = joints[i];
         ji.flags = 0;
-        ji.goal = -9999; //TODO: SET TO SOMETHING SAFER
-        ji.p = 0x32;     //TODO SET TO SOMETHING SAFER????
+        ji.goal = -9999; //TODO: SET TO SOMETHING SAFER 
+        ji.p = 0;     
         ji.i = 0;
         ji.d = 0;
     }
@@ -146,10 +167,9 @@ DarwinController::DarwinController(){
     uint8_t igains[20] = {0, };
     uint8_t dgains[20] = {0, };
 
-    for(int i = 0; i < 20; i++){ //default Robotis dgain is 32
+    for(int i = 0; i < 20; i++){  //default Robotis dgain is 32
         pgains[i] = 32; 
     }
-
 
     Set_Enables(enables);
     Set_P_Data(pgains);
@@ -160,13 +180,16 @@ DarwinController::DarwinController(){
 
 DarwinController::~DarwinController(){}
 
+/* PowerDXL - powers up the motors. Motor LEDs should flash red and an audible change
+ *    in motor spinning should occur.
+ * Return - true if successful
+ */
 bool DarwinController::PowerDXL(){
     unsigned char dxltxpacket[] = {0xFF, 0xFF, ID_CM, 0x04, WRITE, DXL_POWER, 0x01, 0};
     dxltxpacket[7] = CalculateChecksum(dxltxpacket);
     int result = port.WritePort(dxltxpacket, 8); // Robotis uses writebyte
-    //robotis also has a sleep for 300msec.
-
-    usleep(500000);
+    
+    usleep(500000); //robotis has a sleep for 300msec.
 
     if(result != 0){
         return true;
@@ -175,6 +198,10 @@ bool DarwinController::PowerDXL(){
     }
 }
 
+/* Initialize - calls CM730 functions to open serial port communications. It also
+ *      powers up the Dynamixel motors.
+ * Return - true if successful
+ */
 bool DarwinController::Initialize(const char* name){
 
     if(port.OpenPort(name) == false){
@@ -193,12 +220,16 @@ bool DarwinController::Initialize(const char* name){
 
 }
 
+// ClosePort - Closes port communications with the CM730 board
 void DarwinController::ClosePort(){
     port.ClosePort();
 }
 
 
-//InitToPose - gently moves Darwin into a ready position
+/* InitToPose - gently moves Darwin into a ready position with speed 0x40
+ * Return - true if successful
+ *        - false if unable to set torque, or if write fails
+ */
 bool DarwinController::InitToPose(){
 
     unsigned char initpacket[108] = {0, };
@@ -233,9 +264,10 @@ bool DarwinController::InitToPose(){
         initparams[5*z] = z+1;
         initparams[5*z+1] = 0x00;
         initparams[5*z+2] = 0x08; // "zero" neutral position is 2048
-        initparams[5*z+3] = 0x40;
+        initparams[5*z+3] = 0x40; // speed is 0x40
         initparams[5*z+4] = 0x00;
     }
+
     if(SyncWrite(initpacket, 0x1E, initparams, 100, 4) != 108){
         printf("Failed to init to pose\n");
         return false;
@@ -258,7 +290,10 @@ bool DarwinController::InitToPose(){
     return true;
 }
 
-
+/* MakeBulkPacket - creates a bulkread packet based on the ping results.
+ *    It only needs to be called once because the packet will never change.
+ *    If the user wishes to use bulkread, this function must be called first.
+ */
 void DarwinController::MakeBulkPacket(unsigned char *BulkReadTxPacket){
 
     int number = 0;
@@ -312,7 +347,9 @@ void DarwinController::MakeBulkPacket(unsigned char *BulkReadTxPacket){
  * Turns everything you need for a packet into a packet. *
  * Does not cover bulk read or sync write.               *
  *********************************************************/
-void DarwinController::MakePacket(unsigned char* packet, unsigned char motor_ID, unsigned char parambytes, unsigned char instruction, unsigned char address, unsigned char* params){
+void DarwinController::MakePacket(unsigned char* packet, unsigned char motor_ID, 
+                                  unsigned char parambytes, unsigned char instruction, 
+                                  unsigned char address, unsigned char* params){
 
     unsigned char len = parambytes + 6; // Last index of array (where checksum goes)--so not truly the length
     packet[0] = 0xFF;                   // Heading
@@ -328,6 +365,9 @@ void DarwinController::MakePacket(unsigned char* packet, unsigned char motor_ID,
     packet[len] = CalculateChecksum(packet);
 }
 
+/* FinishPacket - Given a packet with all the instructions, parameters, etc.,
+ *     this function finishes it up by putting in the header and checksum.
+ */
 void DarwinController::FinishPacket(unsigned char *txpacket){
     txpacket[0] = 0xFF;                  
     txpacket[1] = 0xFF;
@@ -336,7 +376,11 @@ void DarwinController::FinishPacket(unsigned char *txpacket){
     txpacket[length - 1] = CalculateChecksum(txpacket);
 }
 
-
+/* ReadWrite - Takes care of all read and write commands. 
+ * Return - For write, returns length of packet that was successfully sent out.
+ *        - For read, returns length of packet that was succesfully read.
+ *        - If unsuccessful, returns a bad number (-99999)
+ */
 int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket){
 
     int buf = 30;
@@ -344,16 +388,16 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
     int count = 0;
     unsigned char info[MAXNUM_RXPARAM] = {0, };
 
-    length = txpacket[LENGTH] + 4;
+    length = txpacket[LENGTH] + 4; 
     int return_length = -99999;
     
-    port.ClearPort();
-
     int to_length = 0;
     int num = 0; 
 
-    if(port.WritePort(txpacket, length) == length){ //write to port
-        //printf("in readwrite length: %d\n", length);
+    port.ClearPort();
+    
+    if(port.WritePort(txpacket, length) == length){ // if successfully writes out the entire packet
+        //printf("in readwrite length: %d\n", length);  // for debug purposes
 
         if(txpacket[INSTRUCTION] == SYNC_WRITE){
             return length;
@@ -369,6 +413,8 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
                 int _addr = txpacket[PARAMETER+(3*i)+3];
 
                 to_length += _len + 6;
+
+                // uncomment if you want to use bulkreaddata structure
                 //BulkData[_id].length = _len;
                 //BulkData[_id].start_address = _addr;
             }
@@ -383,20 +429,19 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
             
         }
 
-        int get_length = 0;
+        int get_length = 0; // total received packet length
         int fail_counter = 0; // fail counter for ping
-        int length = 0;
+        int length = 0; //received current packet length
         
-        //printf("getlength: %d, tolength: %d\n", get_length, to_length);
+        //printf("getlength: %d, tolength: %d\n", get_length, to_length); // for debug purposes
 
         // set packet time out:
         double packetStartTime = Time.getCurrentTime();
         double packetWaitTime = 0.012 * (double)length + 5.0;
 
         while(1){ // loop for receiving packet
-            if(fail_counter >= 5){
+            if(fail_counter >= 5){ //failed 5 times. return.
                 if(txpacket[INSTRUCTION] == PING){ 
-                    //failed reading 5 times. return.
                     printf("failed ping\n");
                 }
                 return 0; // culprit. things go wrong if this returns -1. 
@@ -404,7 +449,7 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
 
             length = port.ReadPort(&rxpacket[get_length], to_length - get_length);
 
-            get_length += length;
+            get_length += length; // get_length is how long the received packet is
 
             if(get_length == to_length){ //received a packet of correct length
                 if(txpacket[INSTRUCTION] == BULK_READ){
@@ -454,12 +499,12 @@ int DarwinController::ReadWrite(unsigned char *txpacket, unsigned char *rxpacket
         }
         */
 
-        return_length = get_length;
+        return_length = get_length; // make a copy of the received length for return purposes
 
         while(1){ // this loop is purely for bulkread
             int i;
 
-            for(i = 0; i< get_length - 1; i++){
+            for(i = 0; i< get_length - 1; i++){ //find the header
                 if(rxpacket[i] == 0xFF && rxpacket[i+1] == 0xFF){
                     break;
                 } else if(i == (get_length - 2) && rxpacket[get_length - 1] == 0xFF){
@@ -581,12 +626,17 @@ int DarwinController::SyncWrite(unsigned char* packet, unsigned char instruction
 
 }
 
+/* BulkRead - reads all motor and board information at once into rxpacket
+ * Return - length of successfully read packet
+ */
 int DarwinController::BulkRead(unsigned char *rxpacket){
 
     return ReadWrite(BulkReadTxPacket, rxpacket);
 }
 
-// return value???
+/* WriteByte - Writes a byte of data out to the specified id and address
+ * Return - length of successfully read packet. Return -99999 if fails.
+ */
 int DarwinController::WriteByte(int id, int address, int value){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
 
@@ -602,17 +652,18 @@ int DarwinController::WriteByte(int id, int address, int value){
     port.ClearPort();
     int result = port.WritePort(txpacket, txlength);
 
-    if(result == txlength){ // do we want to return bool???
+    if(result == txlength){
         return result;
     } else {
-        return 0;
+        return -99999;
     }
 
     // robotis also sets an error bit -> do we want to do that?
 }
 
-// return value???
-// where value will be split into high and low bytes in function
+/* WriteWord - Writes word out to the specified id and address
+ * Return - length of successfully read packet. Return -99999 if fails.
+ */
 int DarwinController::WriteWord(int id, int address, int value){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
 
@@ -632,13 +683,15 @@ int DarwinController::WriteWord(int id, int address, int value){
     if(result == txlength){ // do we want to return bool???
         return result;
     } else {
-        return 0;
+        return -99999;
     }
 
 }
 
-
-int DarwinController::ReadByte(int id, int address, int *word){
+/* ReadByte - Read a byte of data from the specified id and address
+ * Return - length of successfully read packet. Return bad number if fails.
+ */
+int DarwinController::ReadByte(int id, int address, int *byte){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
 
@@ -650,17 +703,20 @@ int DarwinController::ReadByte(int id, int address, int *word){
 
     int txlength = txpacket[LENGTH] + 4;
 
-    //makePacket(txpacket);
+    FinishPacket(txpacket); // don't know why i had this commented out.
 
     int result = ReadWrite(txpacket, rxpacket);
 
-    if(result == txlength){ // how to do this???
-        *word = (int)rxpacket[PARAMETER];
+    if(result == txlength){ 
+        *byte = (int)rxpacket[PARAMETER];
     }
 
     return result;
 }
 
+/* ReadWord - Read word from the specified id and address
+ * Return - length of successfully read packet. Return bad number if fails.
+ */
 int DarwinController::ReadWord(int id, int address, int *word){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -673,7 +729,7 @@ int DarwinController::ReadWord(int id, int address, int *word){
 
     int txlength = txpacket[LENGTH] + 4;
 
-    //makePacket(txpacket);
+    FinishPacket(txpacket); // don't know why i had this commented out.
 
     int result = ReadWrite(txpacket, rxpacket);
 
@@ -685,7 +741,9 @@ int DarwinController::ReadWord(int id, int address, int *word){
     return result;
 }
 
-
+/* Ping - send a ping to a specific id
+ * Return - true if the ping was successful
+ */
 bool DarwinController::Ping(int id, int *error){
     unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -694,9 +752,6 @@ bool DarwinController::Ping(int id, int *error){
     txpacket[ID]           = (unsigned char)id;
     txpacket[INSTRUCTION]  = 1;
     txpacket[LENGTH]       = 2;
-    
-    // int length = txpacket[LENGTH] + 4;
-    // txpacket[length-1] = CalculateChecksum(txpacket);
 
     FinishPacket(txpacket);
 
@@ -708,7 +763,10 @@ bool DarwinController::Ping(int id, int *error){
     }
 }
 
-// returns joint angle in ticks of prompted joint
+/* ReadJointAngle - sends out a single read to a joint motor
+ * Return - joint angle in ticks of prompted joint
+ *        - for failed read, return -99999
+ */
 int DarwinController::ReadJointAngle(int id){
 
     unsigned char rxpacket[MAXNUM_RXPARAM + 10] = {0, };
@@ -728,7 +786,7 @@ int DarwinController::ReadJointAngle(int id){
 
 }
 
-
+// CalculateChecksum - calculates a checksum for a finished packet
 unsigned char DarwinController::CalculateChecksum(unsigned char *packet){
     unsigned char checksum = 0x00;
     for(int i=2; i<packet[LENGTH]+3; i++ )

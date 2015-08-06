@@ -89,11 +89,17 @@ class DarwinController {
 
         void MakeBulkPacket(unsigned char *BulkReadTxPacket);
 
-        void MakePacket(unsigned char* packet, unsigned char motor_ID, unsigned char parambytes, unsigned char instruction, unsigned char address, unsigned char* params);
+        void MakePacket(unsigned char* packet, unsigned char motor_ID, 
+                        unsigned char parambytes, unsigned char instruction, 
+                        unsigned char address, unsigned char* params);
+
         void FinishPacket(unsigned char *txpacket);
         
         int ReadWrite(unsigned char *txpacket, unsigned char *rxpacket);
-        int SyncWrite(unsigned char* packet, unsigned char instruction, unsigned char* params, unsigned char numparams, unsigned char paramlength);
+        int SyncWrite(unsigned char* packet, unsigned char instruction, 
+                      unsigned char* params, unsigned char numparams, 
+                      unsigned char paramlength);
+        
         int BulkRead(unsigned char *rxpacket);
 
         int WriteByte(int id, int address, int value);
