@@ -268,6 +268,9 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                     m_BulkReadData[_id].error = -1;
                 }
 
+                int count = 0;
+                unsigned char info[MAXNUM_RXPARAM] = {0, };
+
                 while(1)
                 {
                     int i;
@@ -288,8 +291,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 
                         if(rxpacket[LENGTH+rxpacket[LENGTH]] == checksum)
                         {
-                            for(int j = 0; j < (rxpacket[LENGTH]-2); j++)
+                            for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                                 m_BulkReadData[rxpacket[ID]].table[m_BulkReadData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
+                            	info[count++] = rxpacket[PARAMETER+j];
+                            }
 
                             m_BulkReadData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
@@ -311,8 +316,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                             to_length = get_length -= 2;
                         }
 
-                        if(num == 0)
+                        if(num == 0){
+
                             break;
+                        }
                         else if(get_length <= 6)
                         {
                             if(num != 0) res = RX_CORRUPT;
@@ -325,6 +332,14 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                         for(int j = 0; j < (get_length - i); j++)
                             rxpacket[j] = rxpacket[j+i];
                         get_length -= i;
+                    }
+
+                    int buf = 30;
+                       	for(int i = 0; i < 20; i++){
+                       		printf("%d: ", i+1);
+                       		for(int j = 0; j < 23; j++)
+                       			printf("%d ", info[buf++]);
+                       		printf("\n");
                     }
                 }
 			}
@@ -409,16 +424,16 @@ void CM730::MakeBulkReadPacket()
         number++;
     }
 
-//    for(int id = 1; id < JointData::NUMBER_OF_JOINTS; id++)
-//    {
-//        if(MotionStatus::m_CurrentJoints.GetEnable(id))
-//        {
-//            m_BulkReadTxPacket[PARAMETER+3*number+1] = 2;   // length
-//            m_BulkReadTxPacket[PARAMETER+3*number+2] = id;  // id
-//            m_BulkReadTxPacket[PARAMETER+3*number+3] = MX28::P_PRESENT_POSITION_L; // start address
-//            number++;
-//        }
-//    }
+    for(int id = 1; id < JointData::NUMBER_OF_JOINTS; id++)
+    {
+        if(MotionStatus::m_CurrentJoints.GetEnable(id))
+        {
+            m_BulkReadTxPacket[PARAMETER+3*number+1] = 2;   // length
+            m_BulkReadTxPacket[PARAMETER+3*number+2] = id;  // id
+            m_BulkReadTxPacket[PARAMETER+3*number+3] = MX28::P_PRESENT_POSITION_L; // start address
+            number++;
+        }
+    }
 
     if(Ping(FSR::ID_L_FSR, 0) == SUCCESS)
     {

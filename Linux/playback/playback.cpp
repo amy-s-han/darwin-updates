@@ -143,6 +143,9 @@ int main(int argc, char** argv){
         return -1;
     }
 
+    CM730::MakeBulkReadPacket();
+    CM730::BulkRead();
+
     playback->Start();
 
     while (!playback->IsDone()) {
