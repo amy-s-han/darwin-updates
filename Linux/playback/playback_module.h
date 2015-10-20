@@ -14,12 +14,15 @@
 namespace Robot {
 
 	class Playback : public MotionModule {
-
-	public: 
-		bool isDone;
-		const char* file; // check on pointer to string
+	
+	private:
+		bool isPlaying;
+		const char* file;   //file name
 		int offset_counter; //keeps track of index within playback file
 		double dt;
+
+	public: 
+		
 		size_t njoints;
 		size_t nticks;
 
@@ -32,12 +35,7 @@ namespace Robot {
 		void Process();
 		bool parse_file();
 		bool IsDone();
-
-		// Maybe we want these?
-		// void LoadINISettings(minIni* ini);
-  		// void LoadINISettings(minIni* ini, const std::string &section);
-  		// void SaveINISettings(minIni* ini);
-  		// void SaveINISettings(minIni* ini, const std::string &section);
+		void Start();
 
 	};
 

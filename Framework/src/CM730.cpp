@@ -38,6 +38,7 @@ BulkReadData::BulkReadData() :
         table[i] = 0;
 }
 
+// index into table and return what is in the bucket specified by the address
 int BulkReadData::ReadByte(int address)
 {
     if(address >= start_address && address < (start_address + length))
@@ -68,8 +69,10 @@ CM730::~CM730()
 	Disconnect();
 }
 
+// Transfer and receive packets
 int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int priority)
 {
+	// set priorities
 	if(priority > 1)
 		m_Platform->LowPriorityWait();
 	if(priority > 0)
@@ -81,9 +84,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 
 	txpacket[0] = 0xFF;
     txpacket[1] = 0xFF;
+    // store checksum in last bucket. (added 4 to length in line 85)
 	txpacket[length - 1] = CalculateChecksum(txpacket);
 
-	if(DEBUG_PRINT == true)
+	if(DEBUG_PRINT == true) // print out the instruction type
 	{
 		fprintf(stderr, "\nTX: ");
 		for(int n=0; n<length; n++)
@@ -130,21 +134,21 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 		}
 	}
 
-	if(length < (MAXNUM_TXPARAM + 6))
+	if(length < (MAXNUM_TXPARAM + 6)) //if length is less than max length
 	{
-		m_Platform->ClearPort();
-		if(m_Platform->WritePort(txpacket, length) == length)
-		{
-			if (txpacket[ID] != ID_BROADCAST)
+		m_Platform->ClearPort(); //calls tcflush(m_Socket_fd, TCIFLUSH)
+		if(m_Platform->WritePort(txpacket, length) == length) //writes it out to port
+		{   // if sucessfull write
+			if (txpacket[ID] != ID_BROADCAST) //if broadcast to specific motor
 			{
-				int to_length = 0;
+				int to_length = 0; 
 
 				if(txpacket[INSTRUCTION] == INST_READ)
 					to_length = txpacket[PARAMETER+1] + 6;
 				else
 					to_length = 6;
 
-				m_Platform->SetPacketTimeout(length);
+				m_Platform->SetPacketTimeout(length); //start timer
 
 				int get_length = 0;
 				if(DEBUG_PRINT == true)
@@ -172,7 +176,7 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 								break;
 						}
 
-						if(i == 0)
+						if(i == 0) //Successfully found header in above loop
 						{
 							// Check checksum
 							unsigned char checksum = CalculateChecksum(rxpacket);
@@ -186,8 +190,8 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 							
 							break;
 						}
-						else
-						{
+						else //failed to find packet in the beginning of new packet
+						{ // scoot everything over so that packet starts w/ header
 							for(int j = 0; j < (get_length - i); j++)
 								rxpacket[j] = rxpacket[j+i];
 							get_length -= i;
@@ -264,6 +268,9 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                     m_BulkReadData[_id].error = -1;
                 }
 
+                int count = 0;
+                unsigned char info[MAXNUM_RXPARAM] = {0, };
+
                 while(1)
                 {
                     int i;
@@ -284,8 +291,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 
                         if(rxpacket[LENGTH+rxpacket[LENGTH]] == checksum)
                         {
-                            for(int j = 0; j < (rxpacket[LENGTH]-2); j++)
+                            for(int j = 0; j < (rxpacket[LENGTH]-2); j++){
                                 m_BulkReadData[rxpacket[ID]].table[m_BulkReadData[rxpacket[ID]].start_address + j] = rxpacket[PARAMETER + j];
+                            	info[count++] = rxpacket[PARAMETER+j];
+                            }
 
                             m_BulkReadData[rxpacket[ID]].error = (int)rxpacket[ERRBIT];
 
@@ -307,8 +316,10 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                             to_length = get_length -= 2;
                         }
 
-                        if(num == 0)
+                        if(num == 0){
+
                             break;
+                        }
                         else if(get_length <= 6)
                         {
                             if(num != 0) res = RX_CORRUPT;
@@ -321,6 +332,14 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
                         for(int j = 0; j < (get_length - i); j++)
                             rxpacket[j] = rxpacket[j+i];
                         get_length -= i;
+                    }
+
+                    int buf = 30;
+                       	for(int i = 0; i < 20; i++){
+                       		printf("%d: ", i+1);
+                       		for(int j = 0; j < 23; j++)
+                       			printf("%d ", info[buf++]);
+                       		printf("\n");
                     }
                 }
 			}
@@ -369,6 +388,7 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 		}
 	}
 
+	// release priorities
 	m_Platform->HighPriorityRelease();
     if(priority > 0)
         m_Platform->MidPriorityRelease();
@@ -378,6 +398,8 @@ int CM730::TxRxPacket(unsigned char *txpacket, unsigned char *rxpacket, int prio
 	return res;
 }
 
+// checksum is the logical not of the sum of everything from 
+// packet[2] to packet[LENGTH+3](This is the number of packets - 1)
 unsigned char CM730::CalculateChecksum(unsigned char *packet)
 {
 	unsigned char checksum = 0x00;
@@ -402,16 +424,16 @@ void CM730::MakeBulkReadPacket()
         number++;
     }
 
-//    for(int id = 1; id < JointData::NUMBER_OF_JOINTS; id++)
-//    {
-//        if(MotionStatus::m_CurrentJoints.GetEnable(id))
-//        {
-//            m_BulkReadTxPacket[PARAMETER+3*number+1] = 2;   // length
-//            m_BulkReadTxPacket[PARAMETER+3*number+2] = id;  // id
-//            m_BulkReadTxPacket[PARAMETER+3*number+3] = MX28::P_PRESENT_POSITION_L; // start address
-//            number++;
-//        }
-//    }
+    for(int id = 1; id < JointData::NUMBER_OF_JOINTS; id++)
+    {
+        if(MotionStatus::m_CurrentJoints.GetEnable(id))
+        {
+            m_BulkReadTxPacket[PARAMETER+3*number+1] = 2;   // length
+            m_BulkReadTxPacket[PARAMETER+3*number+2] = id;  // id
+            m_BulkReadTxPacket[PARAMETER+3*number+3] = MX28::P_PRESENT_POSITION_L; // start address
+            number++;
+        }
+    }
 
     if(Ping(FSR::ID_L_FSR, 0) == SUCCESS)
     {
@@ -445,6 +467,7 @@ int CM730::BulkRead()
     }
 }
 
+// write out instruction to all motors
 int CM730::SyncWrite(int start_addr, int each_length, int number, int *pParam)
 {
 	unsigned char txpacket[MAXNUM_TXPARAM + 10] = {0, };
@@ -455,8 +478,12 @@ int CM730::SyncWrite(int start_addr, int each_length, int number, int *pParam)
     txpacket[INSTRUCTION]       = INST_SYNC_WRITE;
     txpacket[PARAMETER]			= (unsigned char)start_addr;
     txpacket[PARAMETER + 1]		= (unsigned char)(each_length - 1);
+
+    // parameter plus 2 is 7 which is first data slot
     for(n = 0; n < (number * each_length); n++)
         txpacket[PARAMETER + 2 + n]   = (unsigned char)pParam[n];
+
+    // n is num packets * length of packet
     txpacket[LENGTH]            = n + 4;
 
     return TxRxPacket(txpacket, rxpacket, 0);
